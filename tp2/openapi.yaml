@@ -1,0 +1,2381 @@
+openapi: 3.0.3
+info:
+  title: Payroll Receipts API
+  version: 1.0.0
+  description: 'API multi-tenant para gestión de liquidaciones y generación de recibos de sueldo.
+
+    Incluye tenants, empleados, documentación digitalizada, conceptos, períodos,
+
+    liquidaciones, generación de PDF y firma digital mediante certificado/token criptográfico.
+
+    '
+servers:
+- url: https://api.midominio.com/api/v1
+  description: Producción
+- url: https://localhost:7001/api/v1
+  description: Desarrollo
+tags:
+- name: Auth
+- name: Tenants
+- name: Employees
+- name: Employee Documents
+- name: Digital Signatures
+- name: Payroll Concepts
+- name: Payroll Periods
+- name: Payroll Settlements
+- name: Receipts
+security:
+- bearerAuth: []
+paths:
+  /auth/login:
+    post:
+      tags:
+      - Auth
+      summary: Autenticar usuario
+      security: []
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequestDto'
+      responses:
+        '200':
+          description: Autenticación correcta
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponseDto'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /employees:
+    get:
+      tags:
+      - Employees
+      summary: Listar empleados
+      operationId: getEmployees
+      parameters:
+      - $ref: '#/components/parameters/TenantIdHeader'
+      - name: search
+        in: query
+        schema:
+          type: string
+      - name: isActive
+        in: query
+        schema:
+          type: boolean
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Lista paginada de empleados
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedEmployeeDto'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      tags:
+      - Employees
+      summary: Crear empleado
+      operationId: createEmployee
+      parameters:
+      - $ref: '#/components/parameters/TenantIdHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEmployeeDto'
+      responses:
+        '201':
+          description: Empleado creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeDto'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /employees/{employeeId}:
+    get:
+      tags:
+      - Employees
+      summary: Obtener empleado
+      operationId: getEmployeeById
+      parameters:
+      - $ref: '#/components/parameters/TenantIdHeader'
+      - $ref: '#/components/parameters/EmployeeId'
+      responses:
+        '200':
+          description: Empleado encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeDto'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags:
+      - Employees
+      summary: Actualizar empleado
+      operationId: updateEmployee
+      parameters:
+      - $ref: '#/components/parameters/TenantIdHeader'
+      - $ref: '#/components/parameters/EmployeeId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateEmployeeDto'
+      responses:
+        '200':
+          description: Empleado actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeDto'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /tenants:
+    get:
+      tags:
+      - Tenants
+      summary: Listar tenants accesibles para el usuario
+      operationId: getTenants
+      responses:
+        '200':
+          description: Tenants autorizados
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TenantDto'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags:
+      - Tenants
+      summary: Crear tenant
+      operationId: createTenant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTenantDto'
+      responses:
+        '201':
+          description: Tenant creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantDto'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /tenants/{tenantId}:
+    get:
+      tags:
+      - Tenants
+      summary: Obtener tenant
+      operationId: getTenant
+      parameters:
+      - name: tenantId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Tenant
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantDto'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /employees/{employeeId}/documents:
+    get:
+      tags:
+      - Employee Documents
+      summary: Listar documentación digitalizada del empleado
+      operationId: getEmployeeDocuments
+      parameters:
+      - $ref: '#/components/parameters/TenantIdHeader'
+      - $ref: '#/components/parameters/EmployeeId'
+      - name: documentType
+        in: query
+        schema:
+          $ref: '#/components/schemas/EmployeeDocumentType'
+      responses:
+        '200':
+          description: Documentos del empleado
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EmployeeDocumentDto'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    post:
+      tags:
+      - Employee Documents
+      summary: Subir documentación digitalizada del empleado
+      operationId: uploadEmployeeDocument
+      parameters:
+      - $ref: '#/components/parameters/TenantIdHeader'
+      - $ref: '#/components/parameters/EmployeeId'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UploadEmployeeDocumentDto'
+      responses:
+        '201':
+          description: Documento almacenado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeDocumentDto'
+        '400':
+          $ref: '#/components/responses/BadRequestDocumented'
+        '413':
+          description: Archivo demasiado grande
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ApiProblemDetails'
+        '415':
+          description: Tipo de archivo no soportado
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ApiProblemDetails'
+  /employees/{employeeId}/documents/{documentId}:
+    get:
+      tags:
+      - Employee Documents
+      summary: Obtener metadatos de un documento
+      operationId: getEmployeeDocument
+      parameters:
+      - $ref: '#/components/parameters/TenantIdHeader'
+      - $ref: '#/components/parameters/EmployeeId'
+      - $ref: '#/components/parameters/DocumentId'
+      responses:
+        '200':
+          description: Documento
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeDocumentDto'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags:
+      - Employee Documents
+      summary: Actualizar metadatos del documento
+      operationId: updateEmployeeDocument
+      parameters:
+      - $ref: '#/components/parameters/TenantIdHeader'
+      - $ref: '#/components/parameters/EmployeeId'
+      - $ref: '#/components/parameters/DocumentId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateEmployeeDocumentDto'
+      responses:
+        '200':
+          description: Documento actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeDocumentDto'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags:
+      - Employee Documents
+      summary: Eliminar lógicamente un documento
+      operationId: deleteEmployeeDocument
+      parameters:
+      - $ref: '#/components/parameters/TenantIdHeader'
+      - $ref: '#/components/parameters/EmployeeId'
+      - $ref: '#/components/parameters/DocumentId'
+      responses:
+        '204':
+          description: Documento eliminado
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /employees/{employeeId}/documents/{documentId}/content:
+    get:
+      tags:
+      - Employee Documents
+      summary: Descargar el archivo digitalizado
+      operationId: downloadEmployeeDocument
+      parameters:
+      - $ref: '#/components/parameters/TenantIdHeader'
+      - $ref: '#/components/parameters/EmployeeId'
+      - $ref: '#/components/parameters/DocumentId'
+      responses:
+        '200':
+          description: Contenido binario del documento
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/png:
+              schema:
+                type: string
+                format: binary
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /employees/{employeeId}/certificates:
+    get:
+      tags:
+      - Digital Signatures
+      summary: Listar certificados registrados para el empleado
+      operationId: getEmployeeCertificates
+      parameters:
+      - $ref: '#/components/parameters/TenantIdHeader'
+      - $ref: '#/components/parameters/EmployeeId'
+      responses:
+        '200':
+          description: Certificados
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EmployeeCertificateDto'
+    post:
+      tags:
+      - Digital Signatures
+      summary: Registrar certificado público del token criptográfico
+      description: 'Registra únicamente el certificado público X.509. La clave privada permanece
+
+        en el token/dispositivo criptográfico y nunca debe enviarse al servidor.
+
+        '
+      operationId: registerEmployeeCertificate
+      parameters:
+      - $ref: '#/components/parameters/TenantIdHeader'
+      - $ref: '#/components/parameters/EmployeeId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterEmployeeCertificateDto'
+      responses:
+        '201':
+          description: Certificado registrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeCertificateDto'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /employees/{employeeId}/certificates/{certificateId}/revoke:
+    post:
+      tags:
+      - Digital Signatures
+      summary: Marcar certificado como revocado/inactivo
+      operationId: revokeEmployeeCertificate
+      parameters:
+      - $ref: '#/components/parameters/TenantIdHeader'
+      - $ref: '#/components/parameters/EmployeeId'
+      - $ref: '#/components/parameters/CertificateId'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RevokeCertificateDto'
+      responses:
+        '200':
+          description: Certificado revocado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeCertificateDto'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /receipts/{receiptId}/signature-challenge:
+    post:
+      tags:
+      - Digital Signatures
+      summary: Crear desafío para firma digital con token
+      description: 'Devuelve el hash SHA-256 del PDF y un challenge de un solo uso.
+
+        El cliente firma localmente el hash/challenge utilizando la clave privada
+
+        contenida en el token criptográfico.
+
+        '
+      operationId: createReceiptSignatureChallenge
+      parameters:
+      - $ref: '#/components/parameters/TenantIdHeader'
+      - $ref: '#/components/parameters/ReceiptId'
+      - $ref: '#/components/parameters/IdempotencyKeyHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSignatureChallengeDto'
+      responses:
+        '200':
+          description: Challenge creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignatureChallengeDto'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /receipts/{receiptId}/digital-signature:
+    post:
+      tags:
+      - Digital Signatures
+      summary: Confirmar firma digital generada mediante token
+      description: 'Recibe una firma CMS/PKCS#7 o equivalente generada en el cliente.
+
+        El servidor valida el certificado, cadena de confianza, vigencia, revocación,
+
+        integridad del hash, challenge, identidad del empleado y pertenencia al tenant.
+
+        '
+      operationId: submitReceiptDigitalSignature
+      parameters:
+      - $ref: '#/components/parameters/TenantIdHeader'
+      - $ref: '#/components/parameters/ReceiptId'
+      - $ref: '#/components/parameters/IdempotencyKeyHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitDigitalSignatureDto'
+      responses:
+        '200':
+          description: Firma validada y asociada al recibo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReceiptDigitalSignatureDto'
+        '400':
+          $ref: '#/components/responses/BadRequestDocumented'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntityDocumented'
+  /receipts/{receiptId}/digital-signature/verify:
+    get:
+      tags:
+      - Digital Signatures
+      summary: Verificar firma digital del recibo
+      operationId: verifyReceiptDigitalSignature
+      parameters:
+      - $ref: '#/components/parameters/TenantIdHeader'
+      - $ref: '#/components/parameters/ReceiptId'
+      responses:
+        '200':
+          description: Resultado de validación criptográfica
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DigitalSignatureVerificationDto'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /payroll-concepts:
+    get:
+      tags:
+      - Payroll Concepts
+      summary: Listar conceptos de liquidación
+      operationId: getPayrollConcepts
+      parameters:
+      - $ref: '#/components/parameters/TenantIdHeader'
+      - name: type
+        in: query
+        schema:
+          $ref: '#/components/schemas/PayrollConceptType'
+      - name: isActive
+        in: query
+        schema:
+          type: boolean
+      responses:
+        '200':
+          description: Conceptos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PayrollConceptDto'
+    post:
+      tags:
+      - Payroll Concepts
+      summary: Crear concepto de liquidación
+      operationId: createPayrollConcept
+      parameters:
+      - $ref: '#/components/parameters/TenantIdHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SavePayrollConceptDto'
+      responses:
+        '201':
+          description: Concepto creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PayrollConceptDto'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /payroll-concepts/{conceptId}:
+    put:
+      tags:
+      - Payroll Concepts
+      summary: Actualizar concepto
+      operationId: updatePayrollConcept
+      parameters:
+      - $ref: '#/components/parameters/TenantIdHeader'
+      - name: conceptId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SavePayrollConceptDto'
+      responses:
+        '200':
+          description: Concepto actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PayrollConceptDto'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /payroll-periods:
+    get:
+      tags:
+      - Payroll Periods
+      summary: Listar períodos de liquidación
+      operationId: getPayrollPeriods
+      parameters:
+      - $ref: '#/components/parameters/TenantIdHeader'
+      - name: year
+        in: query
+        schema:
+          type: integer
+          minimum: 2000
+      - name: month
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 12
+      - name: status
+        in: query
+        schema:
+          $ref: '#/components/schemas/PayrollPeriodStatus'
+      responses:
+        '200':
+          description: Períodos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PayrollPeriodDto'
+    post:
+      tags:
+      - Payroll Periods
+      summary: Crear período de liquidación
+      operationId: createPayrollPeriod
+      parameters:
+      - $ref: '#/components/parameters/TenantIdHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePayrollPeriodDto'
+      responses:
+        '201':
+          description: Período creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PayrollPeriodDto'
+        '400':
+          $ref: '#/components/responses/BadRequestDocumented'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /payroll-periods/{periodId}:
+    get:
+      tags:
+      - Payroll Periods
+      summary: Obtener período
+      operationId: getPayrollPeriod
+      parameters:
+      - $ref: '#/components/parameters/TenantIdHeader'
+      - $ref: '#/components/parameters/PeriodId'
+      responses:
+        '200':
+          description: Período
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PayrollPeriodDto'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /payroll-periods/{periodId}/calculate:
+    post:
+      tags:
+      - Payroll Periods
+      summary: Calcular liquidaciones del período
+      description: 'Genera o recalcula las liquidaciones de los empleados incluidos en el período.
+
+        Esta operación debe ser idempotente cuando se envía X-Idempotency-Key.
+
+        '
+      operationId: calculatePayrollPeriod
+      parameters:
+      - $ref: '#/components/parameters/TenantIdHeader'
+      - $ref: '#/components/parameters/PeriodId'
+      - $ref: '#/components/parameters/IdempotencyKeyHeader'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CalculatePayrollPeriodDto'
+      responses:
+        '200':
+          description: Resultado del cálculo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PayrollCalculationResultDto'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /payroll-periods/{periodId}/close:
+    post:
+      tags:
+      - Payroll Periods
+      summary: Cerrar período
+      description: 'Bloquea modificaciones posteriores sobre las liquidaciones del período,
+
+        salvo reapertura administrativa explícita.
+
+        '
+      operationId: closePayrollPeriod
+      parameters:
+      - $ref: '#/components/parameters/TenantIdHeader'
+      - $ref: '#/components/parameters/PeriodId'
+      responses:
+        '200':
+          description: Período cerrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PayrollPeriodDto'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /payroll-periods/{periodId}/reopen:
+    post:
+      tags:
+      - Payroll Periods
+      summary: Reabrir período
+      operationId: reopenPayrollPeriod
+      parameters:
+      - $ref: '#/components/parameters/TenantIdHeader'
+      - $ref: '#/components/parameters/PeriodId'
+      responses:
+        '200':
+          description: Período reabierto
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PayrollPeriodDto'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /payroll-periods/{periodId}/receipts/generate:
+    post:
+      tags:
+      - Receipts
+      summary: Generar recibos PDF de todo el período
+      operationId: generatePeriodReceipts
+      parameters:
+      - $ref: '#/components/parameters/TenantIdHeader'
+      - $ref: '#/components/parameters/PeriodId'
+      - $ref: '#/components/parameters/IdempotencyKeyHeader'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GeneratePeriodReceiptsDto'
+      responses:
+        '200':
+          description: Resultado de generación
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneratePeriodReceiptsResultDto'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /payroll-settlements:
+    get:
+      tags:
+      - Payroll Settlements
+      summary: Listar liquidaciones
+      operationId: getPayrollSettlements
+      parameters:
+      - $ref: '#/components/parameters/TenantIdHeader'
+      - name: periodId
+        in: query
+        schema:
+          type: string
+          format: uuid
+      - name: employeeId
+        in: query
+        schema:
+          type: string
+          format: uuid
+      - name: status
+        in: query
+        schema:
+          $ref: '#/components/schemas/PayrollSettlementStatus'
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Liquidaciones
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedPayrollSettlementDto'
+    post:
+      tags:
+      - Payroll Settlements
+      summary: Crear liquidación individual
+      operationId: createPayrollSettlement
+      parameters:
+      - $ref: '#/components/parameters/TenantIdHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePayrollSettlementDto'
+      responses:
+        '201':
+          description: Liquidación creada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PayrollSettlementDetailDto'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /payroll-settlements/{settlementId}:
+    get:
+      tags:
+      - Payroll Settlements
+      summary: Obtener liquidación
+      operationId: getPayrollSettlement
+      parameters:
+      - $ref: '#/components/parameters/TenantIdHeader'
+      - $ref: '#/components/parameters/SettlementId'
+      responses:
+        '200':
+          description: Liquidación
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PayrollSettlementDetailDto'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags:
+      - Payroll Settlements
+      summary: Actualizar cabecera de liquidación
+      operationId: updatePayrollSettlement
+      parameters:
+      - $ref: '#/components/parameters/TenantIdHeader'
+      - $ref: '#/components/parameters/SettlementId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePayrollSettlementDto'
+      responses:
+        '200':
+          description: Liquidación actualizada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PayrollSettlementDetailDto'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /payroll-settlements/{settlementId}/items:
+    post:
+      tags:
+      - Payroll Settlements
+      summary: Agregar ítem a la liquidación
+      operationId: addPayrollSettlementItem
+      parameters:
+      - $ref: '#/components/parameters/TenantIdHeader'
+      - $ref: '#/components/parameters/SettlementId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SavePayrollSettlementItemDto'
+      responses:
+        '201':
+          description: Ítem agregado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PayrollSettlementItemDto'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /payroll-settlements/{settlementId}/items/{itemId}:
+    put:
+      tags:
+      - Payroll Settlements
+      summary: Actualizar ítem de liquidación
+      operationId: updatePayrollSettlementItem
+      parameters:
+      - $ref: '#/components/parameters/TenantIdHeader'
+      - $ref: '#/components/parameters/SettlementId'
+      - name: itemId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SavePayrollSettlementItemDto'
+      responses:
+        '200':
+          description: Ítem actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PayrollSettlementItemDto'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+    delete:
+      tags:
+      - Payroll Settlements
+      summary: Eliminar ítem de liquidación
+      operationId: deletePayrollSettlementItem
+      parameters:
+      - $ref: '#/components/parameters/TenantIdHeader'
+      - $ref: '#/components/parameters/SettlementId'
+      - name: itemId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '204':
+          description: Ítem eliminado
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /payroll-settlements/{settlementId}/recalculate:
+    post:
+      tags:
+      - Payroll Settlements
+      summary: Recalcular liquidación individual
+      operationId: recalculatePayrollSettlement
+      parameters:
+      - $ref: '#/components/parameters/TenantIdHeader'
+      - $ref: '#/components/parameters/SettlementId'
+      responses:
+        '200':
+          description: Liquidación recalculada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PayrollSettlementDetailDto'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /payroll-settlements/{settlementId}/receipt:
+    post:
+      tags:
+      - Receipts
+      summary: Generar recibo PDF para una liquidación
+      operationId: generateReceipt
+      parameters:
+      - $ref: '#/components/parameters/TenantIdHeader'
+      - $ref: '#/components/parameters/SettlementId'
+      - $ref: '#/components/parameters/IdempotencyKeyHeader'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateReceiptDto'
+      responses:
+        '201':
+          description: Recibo generado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReceiptDto'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /receipts:
+    get:
+      tags:
+      - Receipts
+      summary: Listar recibos
+      operationId: getReceipts
+      parameters:
+      - $ref: '#/components/parameters/TenantIdHeader'
+      - name: periodId
+        in: query
+        schema:
+          type: string
+          format: uuid
+      - name: employeeId
+        in: query
+        schema:
+          type: string
+          format: uuid
+      - name: status
+        in: query
+        schema:
+          $ref: '#/components/schemas/ReceiptStatus'
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Recibos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedReceiptDto'
+  /receipts/{receiptId}:
+    get:
+      tags:
+      - Receipts
+      summary: Obtener metadatos y detalle del recibo
+      operationId: getReceipt
+      parameters:
+      - $ref: '#/components/parameters/TenantIdHeader'
+      - $ref: '#/components/parameters/ReceiptId'
+      responses:
+        '200':
+          description: Recibo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReceiptDetailDto'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /receipts/{receiptId}/pdf:
+    get:
+      tags:
+      - Receipts
+      summary: Descargar PDF del recibo
+      operationId: downloadReceiptPdf
+      parameters:
+      - $ref: '#/components/parameters/TenantIdHeader'
+      - $ref: '#/components/parameters/ReceiptId'
+      responses:
+        '200':
+          description: Archivo PDF
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+              example: attachment; filename="recibo-2026-08-1234.pdf"
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /receipts/{receiptId}/sign:
+    post:
+      tags:
+      - Receipts
+      summary: Firmar recibo
+      description: 'Registra la firma del empleado. La implementación puede utilizar una firma
+
+        almacenada previamente, firma electrónica o un mecanismo externo.
+
+        '
+      operationId: signReceipt
+      parameters:
+      - $ref: '#/components/parameters/TenantIdHeader'
+      - $ref: '#/components/parameters/ReceiptId'
+      - $ref: '#/components/parameters/IdempotencyKeyHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignReceiptDto'
+      responses:
+        '200':
+          description: Recibo firmado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReceiptDetailDto'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /receipts/{receiptId}/acknowledge:
+    post:
+      tags:
+      - Receipts
+      summary: Registrar visualización/aceptación del recibo
+      operationId: acknowledgeReceipt
+      parameters:
+      - $ref: '#/components/parameters/TenantIdHeader'
+      - $ref: '#/components/parameters/ReceiptId'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AcknowledgeReceiptDto'
+      responses:
+        '200':
+          description: Aceptación registrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReceiptDetailDto'
+        '409':
+          $ref: '#/components/responses/Conflict'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    TenantIdHeader:
+      name: X-Tenant-Id
+      in: header
+      required: true
+      description: Tenant sobre el que se ejecuta la operación. Debe coincidir con un tenant autorizado en el JWT.
+      schema:
+        type: string
+        format: uuid
+    IdempotencyKeyHeader:
+      name: X-Idempotency-Key
+      in: header
+      required: false
+      description: 'Identificador único de la operación para evitar ejecuciones duplicadas
+
+        en acciones críticas como cálculo, generación de recibos o firma.
+
+        '
+      schema:
+        type: string
+        maxLength: 100
+    Page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    PageSize:
+      name: pageSize
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 200
+        default: 25
+    DocumentId:
+      name: documentId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    CertificateId:
+      name: certificateId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    EmployeeId:
+      name: employeeId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    PeriodId:
+      name: periodId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    SettlementId:
+      name: settlementId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    ReceiptId:
+      name: receiptId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    BadRequest:
+      description: Solicitud inválida
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ApiProblemDetails'
+    Unauthorized:
+      description: Token ausente, inválido o expirado
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ApiProblemDetails'
+    Forbidden:
+      description: El usuario no posee permisos
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ApiProblemDetails'
+    NotFound:
+      description: Recurso no encontrado
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ApiProblemDetails'
+    Conflict:
+      description: Conflicto con el estado actual del recurso
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ApiProblemDetails'
+    UnprocessableEntity:
+      description: La solicitud es válida pero no puede procesarse por reglas de negocio
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ApiProblemDetails'
+    BadRequestDocumented:
+      description: Solicitud inválida. Error de validación o datos inconsistentes.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorDto'
+          example:
+            status: 400
+            title: Bad Request
+            detail: Uno o más datos enviados son inválidos.
+            errorCode: VALIDATION_ERROR
+            traceId: 8cc8bbd9-1d93-4a3a-9060-2cfa9eaa1477
+            timestamp: '2026-09-12T18:00:00Z'
+            errors:
+              documentType:
+              - El tipo de documento es obligatorio.
+              file:
+              - El archivo es obligatorio.
+    UnprocessableEntityDocumented:
+      description: La solicitud es válida sintácticamente pero no puede procesarse por una regla de negocio.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorDto'
+          example:
+            status: 422
+            title: Unprocessable Entity
+            detail: El certificado digital se encuentra vencido.
+            errorCode: CERTIFICATE_EXPIRED
+            traceId: b2df76b8-0e13-4eac-a403-d09d31939334
+            timestamp: '2026-09-12T18:05:00Z'
+            errors: null
+  schemas:
+    TenantDto:
+      type: object
+      required:
+      - id
+      - code
+      - name
+      - isActive
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: SUSEPU
+        name:
+          type: string
+          example: Superintendencia de Servicios Públicos
+        taxId:
+          type: string
+          nullable: true
+        legalName:
+          type: string
+          nullable: true
+        isActive:
+          type: boolean
+        storagePrefix:
+          type: string
+          nullable: true
+          description: Prefijo lógico para aislamiento de archivos por tenant.
+    CreateTenantDto:
+      type: object
+      required:
+      - code
+      - name
+      properties:
+        code:
+          type: string
+          maxLength: 30
+        name:
+          type: string
+          maxLength: 200
+        taxId:
+          type: string
+          nullable: true
+        legalName:
+          type: string
+          nullable: true
+    EmployeeDocumentType:
+      type: string
+      enum:
+      - IdentityDocumentFront
+      - IdentityDocumentBack
+      - ProfilePhoto
+      - CuilCertificate
+      - BirthCertificate
+      - AddressCertificate
+      - MedicalCertificate
+      - Contract
+      - Other
+    EmployeeDocumentDto:
+      type: object
+      required:
+      - id
+      - employeeId
+      - documentType
+      - originalFileName
+      - contentType
+      - sizeBytes
+      - sha256
+      - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+          format: uuid
+        employeeId:
+          type: string
+          format: uuid
+        documentType:
+          $ref: '#/components/schemas/EmployeeDocumentType'
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        documentNumber:
+          type: string
+          nullable: true
+        issueDate:
+          type: string
+          format: date
+          nullable: true
+        expirationDate:
+          type: string
+          format: date
+          nullable: true
+        originalFileName:
+          type: string
+        contentType:
+          type: string
+          example: application/pdf
+        sizeBytes:
+          type: integer
+          format: int64
+        sha256:
+          type: string
+        storageKey:
+          type: string
+          description: Identificador interno. No debe exponer una ruta física pública.
+        isConfidential:
+          type: boolean
+          default: true
+        createdAt:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+          format: uuid
+          nullable: true
+    UploadEmployeeDocumentDto:
+      type: object
+      required:
+      - file
+      - documentType
+      - title
+      properties:
+        file:
+          type: string
+          format: binary
+        documentType:
+          $ref: '#/components/schemas/EmployeeDocumentType'
+        title:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+          nullable: true
+        documentNumber:
+          type: string
+          nullable: true
+        issueDate:
+          type: string
+          format: date
+          nullable: true
+        expirationDate:
+          type: string
+          format: date
+          nullable: true
+        isConfidential:
+          type: boolean
+          default: true
+    UpdateEmployeeDocumentDto:
+      type: object
+      properties:
+        documentType:
+          $ref: '#/components/schemas/EmployeeDocumentType'
+        title:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+          nullable: true
+        documentNumber:
+          type: string
+          nullable: true
+        issueDate:
+          type: string
+          format: date
+          nullable: true
+        expirationDate:
+          type: string
+          format: date
+          nullable: true
+        isConfidential:
+          type: boolean
+    CertificateStatus:
+      type: string
+      enum:
+      - Active
+      - Expired
+      - Revoked
+      - Disabled
+    EmployeeCertificateDto:
+      type: object
+      required:
+      - id
+      - employeeId
+      - thumbprint
+      - serialNumber
+      - subject
+      - issuer
+      - validFrom
+      - validTo
+      - status
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+          format: uuid
+        employeeId:
+          type: string
+          format: uuid
+        thumbprint:
+          type: string
+        serialNumber:
+          type: string
+        subject:
+          type: string
+        issuer:
+          type: string
+        validFrom:
+          type: string
+          format: date-time
+        validTo:
+          type: string
+          format: date-time
+        certificateBase64:
+          type: string
+          description: Certificado público X.509 codificado en Base64.
+        status:
+          $ref: '#/components/schemas/CertificateStatus'
+        registeredAt:
+          type: string
+          format: date-time
+    RegisterEmployeeCertificateDto:
+      type: object
+      required:
+      - certificateBase64
+      properties:
+        certificateBase64:
+          type: string
+          description: Certificado X.509 público exportado desde el token, sin clave privada.
+        makeDefault:
+          type: boolean
+          default: true
+    RevokeCertificateDto:
+      type: object
+      properties:
+        reason:
+          type: string
+          nullable: true
+    CreateSignatureChallengeDto:
+      type: object
+      required:
+      - certificateId
+      properties:
+        certificateId:
+          type: string
+          format: uuid
+        signatureFormat:
+          $ref: '#/components/schemas/DigitalSignatureFormat'
+      example:
+        certificateId: 6dbcb856-944d-407a-a900-771e28969d31
+        signatureFormat: CAdES_BES
+    DigitalSignatureFormat:
+      type: string
+      enum:
+      - CMS
+      - PKCS7
+      - CAdES_BES
+    SignatureChallengeDto:
+      type: object
+      required:
+      - challengeId
+      - receiptId
+      - documentHash
+      - hashAlgorithm
+      - challenge
+      - expiresAt
+      properties:
+        challengeId:
+          type: string
+          format: uuid
+        receiptId:
+          type: string
+          format: uuid
+        certificateId:
+          type: string
+          format: uuid
+        documentHash:
+          type: string
+          description: SHA-256 del PDF exacto a firmar.
+        hashAlgorithm:
+          type: string
+          enum:
+          - SHA256
+        challenge:
+          type: string
+          description: Nonce aleatorio de un solo uso, Base64.
+        payloadToSign:
+          type: string
+          description: Payload canónico/Base64 que debe firmar el cliente.
+        expiresAt:
+          type: string
+          format: date-time
+    SubmitDigitalSignatureDto:
+      type: object
+      required:
+      - challengeId
+      - certificateId
+      - signatureFormat
+      - signatureBase64
+      properties:
+        challengeId:
+          type: string
+          format: uuid
+        certificateId:
+          type: string
+          format: uuid
+        signatureFormat:
+          $ref: '#/components/schemas/DigitalSignatureFormat'
+        signatureBase64:
+          type: string
+          description: Firma CMS/PKCS#7/CAdES generada por el token.
+        signedDocumentHash:
+          type: string
+          description: Hash SHA-256 confirmado por el cliente.
+      example:
+        challengeId: 213a1538-9ef4-491a-b39d-4deabf78f0ce
+        certificateId: 6dbcb856-944d-407a-a900-771e28969d31
+        signatureFormat: CAdES_BES
+        signatureBase64: MIIXvgYJKoZIhvcNAQcCoII...
+        signedDocumentHash: 93F17C16CFF20C...
+    ReceiptDigitalSignatureDto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        receiptId:
+          type: string
+          format: uuid
+        employeeId:
+          type: string
+          format: uuid
+        certificateId:
+          type: string
+          format: uuid
+        certificateThumbprint:
+          type: string
+        signatureFormat:
+          $ref: '#/components/schemas/DigitalSignatureFormat'
+        documentHash:
+          type: string
+        signatureHash:
+          type: string
+        signedAt:
+          type: string
+          format: date-time
+        isValid:
+          type: boolean
+        validationMessage:
+          type: string
+          nullable: true
+    DigitalSignatureVerificationDto:
+      type: object
+      properties:
+        receiptId:
+          type: string
+          format: uuid
+        isSigned:
+          type: boolean
+        isCryptographicallyValid:
+          type: boolean
+        documentIntegrityValid:
+          type: boolean
+        certificateValid:
+          type: boolean
+        certificateRevoked:
+          type: boolean
+        certificateExpired:
+          type: boolean
+        signerMatchesEmployee:
+          type: boolean
+        tenantValid:
+          type: boolean
+        verifiedAt:
+          type: string
+          format: date-time
+        message:
+          type: string
+          nullable: true
+    LoginRequestDto:
+      type: object
+      required:
+      - userName
+      - password
+      properties:
+        userName:
+          type: string
+          example: admin
+        password:
+          type: string
+          format: password
+          example: password
+    LoginResponseDto:
+      type: object
+      required:
+      - accessToken
+      - expiresAt
+      properties:
+        accessToken:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+        refreshToken:
+          type: string
+          nullable: true
+        user:
+          $ref: '#/components/schemas/UserDto'
+    UserDto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userName:
+          type: string
+        displayName:
+          type: string
+        roles:
+          type: array
+          items:
+            type: string
+        permissions:
+          type: array
+          items:
+            type: string
+        tenantIds:
+          type: array
+          description: Tenants a los que el usuario posee acceso.
+          items:
+            type: string
+            format: uuid
+    EmployeeDto:
+      type: object
+      required:
+      - id
+      - employeeNumber
+      - documentNumber
+      - firstName
+      - lastName
+      - isActive
+      properties:
+        tenantId:
+          type: string
+          format: uuid
+        id:
+          type: string
+          format: uuid
+        employeeNumber:
+          type: string
+          example: '001234'
+        documentType:
+          type: string
+          example: DNI
+        documentNumber:
+          type: string
+          example: '30123456'
+        cuil:
+          type: string
+          example: 20-30123456-7
+        firstName:
+          type: string
+          example: Matías
+        lastName:
+          type: string
+          example: Lozano
+        email:
+          type: string
+          format: email
+          nullable: true
+        hireDate:
+          type: string
+          format: date
+        terminationDate:
+          type: string
+          format: date
+          nullable: true
+        position:
+          type: string
+          nullable: true
+        department:
+          type: string
+          nullable: true
+        bankAccount:
+          type: string
+          nullable: true
+        baseSalary:
+          type: number
+          format: decimal
+          example: 850000.0
+        isActive:
+          type: boolean
+    CreateEmployeeDto:
+      type: object
+      required:
+      - employeeNumber
+      - documentType
+      - documentNumber
+      - firstName
+      - lastName
+      - hireDate
+      properties:
+        employeeNumber:
+          type: string
+        documentType:
+          type: string
+        documentNumber:
+          type: string
+        cuil:
+          type: string
+          nullable: true
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+          format: email
+          nullable: true
+        hireDate:
+          type: string
+          format: date
+        position:
+          type: string
+          nullable: true
+        department:
+          type: string
+          nullable: true
+        bankAccount:
+          type: string
+          nullable: true
+        baseSalary:
+          type: number
+          format: decimal
+          minimum: 0
+    UpdateEmployeeDto:
+      allOf:
+      - $ref: '#/components/schemas/CreateEmployeeDto'
+      - type: object
+        properties:
+          terminationDate:
+            type: string
+            format: date
+            nullable: true
+          isActive:
+            type: boolean
+    PayrollConceptType:
+      type: string
+      enum:
+      - Earning
+      - Deduction
+      - EmployerContribution
+      - Informative
+    PayrollConceptDto:
+      type: object
+      properties:
+        tenantId:
+          type: string
+          format: uuid
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: BASIC
+        name:
+          type: string
+          example: Sueldo básico
+        type:
+          $ref: '#/components/schemas/PayrollConceptType'
+        taxable:
+          type: boolean
+        affectsNetSalary:
+          type: boolean
+        defaultPercentage:
+          type: number
+          format: decimal
+          nullable: true
+        isActive:
+          type: boolean
+    SavePayrollConceptDto:
+      type: object
+      required:
+      - code
+      - name
+      - type
+      - affectsNetSalary
+      properties:
+        code:
+          type: string
+          maxLength: 30
+        name:
+          type: string
+          maxLength: 150
+        type:
+          $ref: '#/components/schemas/PayrollConceptType'
+        taxable:
+          type: boolean
+          default: false
+        affectsNetSalary:
+          type: boolean
+        defaultPercentage:
+          type: number
+          format: decimal
+          nullable: true
+        isActive:
+          type: boolean
+          default: true
+    PayrollPeriodStatus:
+      type: string
+      enum:
+      - Draft
+      - Calculated
+      - Closed
+    PayrollPeriodDto:
+      type: object
+      properties:
+        tenantId:
+          type: string
+          format: uuid
+        id:
+          type: string
+          format: uuid
+        year:
+          type: integer
+          example: 2026
+        month:
+          type: integer
+          minimum: 1
+          maximum: 12
+          example: 8
+        description:
+          type: string
+          example: Agosto 2026
+        paymentDate:
+          type: string
+          format: date
+          nullable: true
+        status:
+          $ref: '#/components/schemas/PayrollPeriodStatus'
+        createdAt:
+          type: string
+          format: date-time
+        calculatedAt:
+          type: string
+          format: date-time
+          nullable: true
+        closedAt:
+          type: string
+          format: date-time
+          nullable: true
+    CreatePayrollPeriodDto:
+      type: object
+      required:
+      - year
+      - month
+      properties:
+        year:
+          type: integer
+          minimum: 2000
+        month:
+          type: integer
+          minimum: 1
+          maximum: 12
+        description:
+          type: string
+          maxLength: 100
+        paymentDate:
+          type: string
+          format: date
+          nullable: true
+    CalculatePayrollPeriodDto:
+      type: object
+      properties:
+        employeeIds:
+          type: array
+          nullable: true
+          description: Si se omite, se liquidan todos los empleados activos.
+          items:
+            type: string
+            format: uuid
+        recalculateExisting:
+          type: boolean
+          default: false
+    PayrollCalculationResultDto:
+      type: object
+      properties:
+        periodId:
+          type: string
+          format: uuid
+        employeesProcessed:
+          type: integer
+        settlementsCreated:
+          type: integer
+        settlementsUpdated:
+          type: integer
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/PayrollCalculationErrorDto'
+    PayrollCalculationErrorDto:
+      type: object
+      properties:
+        employeeId:
+          type: string
+          format: uuid
+        employeeNumber:
+          type: string
+        message:
+          type: string
+    PayrollSettlementStatus:
+      type: string
+      enum:
+      - Draft
+      - Calculated
+      - ReceiptGenerated
+      - Closed
+    CreatePayrollSettlementDto:
+      type: object
+      required:
+      - periodId
+      - employeeId
+      properties:
+        periodId:
+          type: string
+          format: uuid
+        employeeId:
+          type: string
+          format: uuid
+        baseSalary:
+          type: number
+          format: decimal
+          minimum: 0
+        workedDays:
+          type: number
+          format: decimal
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+    UpdatePayrollSettlementDto:
+      type: object
+      properties:
+        baseSalary:
+          type: number
+          format: decimal
+          minimum: 0
+        workedDays:
+          type: number
+          format: decimal
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+    PayrollSettlementDto:
+      type: object
+      properties:
+        tenantId:
+          type: string
+          format: uuid
+        id:
+          type: string
+          format: uuid
+        periodId:
+          type: string
+          format: uuid
+        employeeId:
+          type: string
+          format: uuid
+        employeeNumber:
+          type: string
+        employeeName:
+          type: string
+        status:
+          $ref: '#/components/schemas/PayrollSettlementStatus'
+        grossAmount:
+          type: number
+          format: decimal
+        deductionAmount:
+          type: number
+          format: decimal
+        netAmount:
+          type: number
+          format: decimal
+        receiptId:
+          type: string
+          format: uuid
+          nullable: true
+    PayrollSettlementDetailDto:
+      allOf:
+      - $ref: '#/components/schemas/PayrollSettlementDto'
+      - type: object
+        properties:
+          baseSalary:
+            type: number
+            format: decimal
+          workedDays:
+            type: number
+            format: decimal
+            nullable: true
+          notes:
+            type: string
+            nullable: true
+          items:
+            type: array
+            items:
+              $ref: '#/components/schemas/PayrollSettlementItemDto'
+    SavePayrollSettlementItemDto:
+      type: object
+      required:
+      - conceptId
+      - description
+      - amount
+      properties:
+        conceptId:
+          type: string
+          format: uuid
+        description:
+          type: string
+          maxLength: 200
+        quantity:
+          type: number
+          format: decimal
+          nullable: true
+        unitValue:
+          type: number
+          format: decimal
+          nullable: true
+        percentage:
+          type: number
+          format: decimal
+          nullable: true
+        amount:
+          type: number
+          format: decimal
+        notes:
+          type: string
+          nullable: true
+    PayrollSettlementItemDto:
+      allOf:
+      - $ref: '#/components/schemas/SavePayrollSettlementItemDto'
+      - type: object
+        properties:
+          id:
+            type: string
+            format: uuid
+          conceptCode:
+            type: string
+          conceptType:
+            $ref: '#/components/schemas/PayrollConceptType'
+    ReceiptStatus:
+      type: string
+      enum:
+      - Generated
+      - Viewed
+      - Signed
+      - Replaced
+    GenerateReceiptDto:
+      type: object
+      properties:
+        forceRegenerate:
+          type: boolean
+          default: false
+        includeEmployerSignature:
+          type: boolean
+          default: true
+    GeneratePeriodReceiptsDto:
+      type: object
+      properties:
+        employeeIds:
+          type: array
+          nullable: true
+          items:
+            type: string
+            format: uuid
+        forceRegenerate:
+          type: boolean
+          default: false
+    GeneratePeriodReceiptsResultDto:
+      type: object
+      properties:
+        periodId:
+          type: string
+          format: uuid
+        generated:
+          type: integer
+        skipped:
+          type: integer
+        failed:
+          type: integer
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/PayrollCalculationErrorDto'
+    ReceiptDto:
+      type: object
+      properties:
+        tenantId:
+          type: string
+          format: uuid
+        id:
+          type: string
+          format: uuid
+        settlementId:
+          type: string
+          format: uuid
+        employeeId:
+          type: string
+          format: uuid
+        employeeName:
+          type: string
+        periodId:
+          type: string
+          format: uuid
+        periodDescription:
+          type: string
+        fileName:
+          type: string
+        fileSize:
+          type: integer
+          format: int64
+        sha256:
+          type: string
+          description: Hash SHA-256 del PDF para control de integridad.
+        status:
+          $ref: '#/components/schemas/ReceiptStatus'
+        generatedAt:
+          type: string
+          format: date-time
+        viewedAt:
+          type: string
+          format: date-time
+          nullable: true
+        signedAt:
+          type: string
+          format: date-time
+          nullable: true
+    ReceiptDetailDto:
+      allOf:
+      - $ref: '#/components/schemas/ReceiptDto'
+      - type: object
+        properties:
+          grossAmount:
+            type: number
+            format: decimal
+          deductionAmount:
+            type: number
+            format: decimal
+          netAmount:
+            type: number
+            format: decimal
+          signature:
+            $ref: '#/components/schemas/ReceiptSignatureDto'
+    ReceiptSignatureDto:
+      type: object
+      nullable: true
+      properties:
+        signedByUserId:
+          type: string
+          format: uuid
+        signedAt:
+          type: string
+          format: date-time
+        method:
+          $ref: '#/components/schemas/SignatureMethod'
+        documentHash:
+          type: string
+        ipAddress:
+          type: string
+          nullable: true
+    SignatureMethod:
+      type: string
+      enum:
+      - StoredImage
+      - ElectronicAcceptance
+      - DigitalCertificateToken
+      - ExternalProvider
+    SignReceiptDto:
+      type: object
+      required:
+      - method
+      - documentHash
+      properties:
+        method:
+          $ref: '#/components/schemas/SignatureMethod'
+        documentHash:
+          type: string
+          description: SHA-256 del PDF que el usuario está confirmando.
+        signatureImageId:
+          type: string
+          format: uuid
+          nullable: true
+        acceptance:
+          type: boolean
+          default: true
+        confirmationText:
+          type: string
+          nullable: true
+    AcknowledgeReceiptDto:
+      type: object
+      properties:
+        accepted:
+          type: boolean
+          default: true
+    PagedEmployeeDto:
+      type: object
+      properties:
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        total:
+          type: integer
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/EmployeeDto'
+    PagedPayrollSettlementDto:
+      type: object
+      properties:
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        total:
+          type: integer
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PayrollSettlementDto'
+    PagedReceiptDto:
+      type: object
+      properties:
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        total:
+          type: integer
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReceiptDto'
+    ApiProblemDetails:
+      type: object
+      description: Respuesta estándar compatible con RFC 7807.
+      properties:
+        type:
+          type: string
+          nullable: true
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+          nullable: true
+        instance:
+          type: string
+          nullable: true
+        traceId:
+          type: string
+          nullable: true
+        errors:
+          type: object
+          nullable: true
+          additionalProperties:
+            type: array
+            items:
+              type: string
+    ApiErrorDto:
+      type: object
+      required:
+      - status
+      - title
+      - detail
+      - traceId
+      - timestamp
+      properties:
+        status:
+          type: integer
+          format: int32
+          example: 400
+        title:
+          type: string
+          example: Bad Request
+        detail:
+          type: string
+          example: Uno o más datos enviados son inválidos.
+        errorCode:
+          type: string
+          nullable: true
+          example: VALIDATION_ERROR
+        traceId:
+          type: string
+          format: uuid
+          example: 8cc8bbd9-1d93-4a3a-9060-2cfa9eaa1477
+        timestamp:
+          type: string
+          format: date-time
+          example: '2026-09-12T18:00:00Z'
+        errors:
+          type: object
+          nullable: true
+          additionalProperties:
+            type: array
+            items:
+              type: string
