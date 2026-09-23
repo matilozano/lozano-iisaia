@@ -1,4 +1,4 @@
-# Trabajo Práctico Final — Sistema de Control de Carroza Técnica
+# Trabajo Práctico Final — Sistema de Control de Carrozas
 
 ## 1. Objetivo
 
