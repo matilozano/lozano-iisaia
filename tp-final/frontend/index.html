@@ -8,9 +8,9 @@
 
   <style>
     :root {
-      --bg: #0b1120;
+      --bg: #07111f;
       --panel: #111827;
-      --panel-light: #1f2937;
+      --panel-2: #0f172a;
       --border: #334155;
 
       --text: #f8fafc;
@@ -21,6 +21,8 @@
       --yellow: #facc15;
       --blue: #3b82f6;
       --orange: #f97316;
+
+      --radius: 16px;
     }
 
     * {
@@ -31,25 +33,41 @@
       margin: 0;
       min-height: 100vh;
       font-family: Arial, Helvetica, sans-serif;
-      background:
-        radial-gradient(circle at top, #172554, var(--bg) 45%);
       color: var(--text);
+      background:
+        radial-gradient(circle at top, #172554 0, #0b1120 35%, #020617 100%);
     }
 
-    /* HEADER */
+    button,
+    input {
+      font: inherit;
+    }
+
+    /* =========================
+       HEADER
+    ========================= */
 
     header {
-      padding: 28px 30px;
-      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+
+      padding: 20px 30px;
+
       background: rgba(15, 23, 42, 0.92);
+      backdrop-filter: blur(12px);
+
+      border-bottom: 1px solid var(--border);
     }
 
     .header-content {
-      max-width: 1200px;
+      max-width: 1250px;
       margin: auto;
+
       display: flex;
-      align-items: center;
       justify-content: space-between;
+      align-items: center;
+
       gap: 20px;
     }
 
@@ -61,30 +79,40 @@
     .subtitle {
       margin-top: 6px;
       color: var(--muted);
+      font-size: 14px;
     }
 
     .connection {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 9px;
+
       color: var(--green);
+      font-size: 14px;
       font-weight: bold;
     }
 
     .connection-dot {
       width: 10px;
       height: 10px;
+
       border-radius: 50%;
+
       background: var(--green);
-      box-shadow: 0 0 12px var(--green);
+
+      box-shadow:
+        0 0 8px var(--green),
+        0 0 16px rgba(34, 197, 94, 0.6);
     }
 
-    /* LAYOUT */
+    /* =========================
+       LAYOUT
+    ========================= */
 
     main {
-      max-width: 1200px;
+      max-width: 1250px;
       margin: auto;
-      padding: 30px;
+      padding: 28px;
     }
 
     .grid {
@@ -94,46 +122,64 @@
     }
 
     .panel {
-      background: rgba(17, 24, 39, 0.95);
-      border: 1px solid var(--border);
-      border-radius: 16px;
       padding: 24px;
-      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+
+      background: rgba(17, 24, 39, 0.94);
+
+      box-shadow:
+        0 15px 35px rgba(0, 0, 0, 0.22);
     }
 
-    .panel h2 {
-      margin-top: 0;
-      margin-bottom: 20px;
-      font-size: 18px;
-    }
-
-    .full {
+    .panel.full {
       grid-column: 1 / -1;
     }
 
-    /* DEVICE */
+    .panel h2 {
+      margin: 0 0 20px;
+      font-size: 18px;
+    }
+
+    .panel-description {
+      margin: -10px 0 22px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    /* =========================
+       DEVICES
+    ========================= */
 
     .device {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      padding: 16px 0;
+      gap: 18px;
+
+      padding: 18px 0;
+
       border-bottom: 1px solid var(--border);
-      gap: 20px;
     }
 
     .device:last-child {
       border-bottom: none;
     }
 
+    .device-info {
+      flex: 1;
+    }
+
     .device-name {
-      font-weight: bold;
       margin-bottom: 6px;
+      font-weight: bold;
     }
 
     .status {
       color: var(--muted);
-      font-size: 14px;
+      font-size: 13px;
+      font-weight: bold;
     }
 
     .status.on {
@@ -144,42 +190,69 @@
       color: var(--yellow);
     }
 
-    /* LIGHT */
+    /* =========================
+       NORMAL LIGHTS
+    ========================= */
 
     .lamp {
-      width: 45px;
-      height: 45px;
-      border-radius: 50%;
-      background: #374151;
-      border: 3px solid #475569;
-      transition: 0.25s;
+      width: 48px;
+      height: 48px;
+
       flex-shrink: 0;
+
+      border: 3px solid #475569;
+      border-radius: 50%;
+
+      background: #1e293b;
+
+      transition:
+        background 0.2s,
+        border-color 0.2s,
+        box-shadow 0.2s,
+        transform 0.2s;
     }
 
     .lamp.on {
       background: var(--yellow);
-      border-color: #fde68a;
+      border-color: #fef08a;
+
       box-shadow:
         0 0 15px var(--yellow),
         0 0 35px rgba(250, 204, 21, 0.65);
+
+      transform: scale(1.08);
     }
 
-    /* BUTTONS */
+    /* =========================
+       BUTTONS
+    ========================= */
+
+    .buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+    }
 
     button {
-      border: 0;
-      border-radius: 8px;
       padding: 10px 16px;
-      font-weight: bold;
-      cursor: pointer;
+
+      border: 0;
+      border-radius: 9px;
+
       color: white;
+      font-weight: bold;
+
+      cursor: pointer;
+
       transition:
         transform 0.15s,
+        filter 0.15s,
         opacity 0.15s;
     }
 
     button:hover {
       transform: translateY(-1px);
+      filter: brightness(1.12);
     }
 
     button:active {
@@ -202,58 +275,81 @@
       background: #475569;
     }
 
-    .buttons {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
+    .btn-warning {
+      background: #c2410c;
     }
 
-    /* MOTOR */
+    /* =========================
+       MOTOR
+    ========================= */
 
     .motor-container {
       display: flex;
       align-items: center;
-      gap: 24px;
+      gap: 28px;
+    }
+
+    .motor-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
     }
 
     .motor {
-      width: 100px;
-      height: 100px;
+      width: 110px;
+      height: 110px;
+
+      position: relative;
+
+      flex-shrink: 0;
+
       border: 8px solid #475569;
       border-radius: 50%;
-      position: relative;
-      background: #1e293b;
-      flex-shrink: 0;
+
+      background:
+        radial-gradient(circle, #334155 0 18%, #1e293b 20% 100%);
     }
 
     .motor::before,
     .motor::after {
       content: "";
+
       position: absolute;
-      background: #94a3b8;
       left: 50%;
       top: 50%;
+
+      background: #94a3b8;
+
       transform-origin: center;
     }
 
     .motor::before {
       width: 6px;
-      height: 70px;
+      height: 72px;
+
       margin-left: -3px;
-      margin-top: -35px;
+      margin-top: -36px;
     }
 
     .motor::after {
-      width: 70px;
+      width: 72px;
       height: 6px;
-      margin-left: -35px;
+
+      margin-left: -36px;
       margin-top: -3px;
     }
 
     .motor.running {
       border-color: var(--yellow);
-      box-shadow: 0 0 20px rgba(250, 204, 21, 0.4);
-      animation: rotateMotor var(--motor-speed, 1s) linear infinite;
+
+      box-shadow:
+        0 0 18px rgba(250, 204, 21, 0.5);
+
+      animation:
+        rotateMotor var(--motor-speed, 1s)
+        linear
+        infinite;
     }
 
     .motor.reverse {
@@ -271,29 +367,122 @@
     }
 
     .motor-controls .buttons {
-      margin: 15px 0 20px;
+      margin: 16px 0 20px;
     }
 
-    /* RANGE */
+    /* =========================
+       RANGE
+    ========================= */
 
     .range-container {
-      margin-top: 15px;
-    }
-
-    input[type="range"] {
-      width: 100%;
-      accent-color: var(--blue);
+      margin-top: 20px;
     }
 
     .range-info {
       display: flex;
       justify-content: space-between;
+
       margin-bottom: 8px;
+
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--blue);
+      cursor: pointer;
+    }
+
+    /* =========================
+       LIGHT EFFECT SIMULATOR
+    ========================= */
+
+    .light-simulator {
+      padding: 25px;
+
+      border: 1px solid #263449;
+      border-radius: 14px;
+
+      background:
+        radial-gradient(circle at center, #111c30, #020617);
+    }
+
+    .light-strip {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 18px;
+
+      padding: 30px;
+
+      border: 1px solid var(--border);
+      border-radius: 14px;
+
+      background: #020617;
+    }
+
+    .channel {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .bulb {
+      width: min(100%, 68px);
+      aspect-ratio: 1;
+
+      border: 4px solid #475569;
+      border-radius: 50%;
+
+      background: #1e293b;
+
+      transition:
+        background 0.08s,
+        border-color 0.08s,
+        box-shadow 0.08s,
+        transform 0.08s;
+    }
+
+    .bulb.active {
+      border-color: #fef08a;
+
+      background: var(--yellow);
+
+      box-shadow:
+        0 0 12px var(--yellow),
+        0 0 30px rgba(250, 204, 21, 0.8),
+        0 0 55px rgba(250, 204, 21, 0.4);
+
+      transform: scale(1.13);
+    }
+
+    .channel-number {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .effect-status {
+      margin: 18px 0;
+
+      text-align: center;
+
       color: var(--muted);
       font-size: 14px;
     }
 
-    /* SEQUENCES */
+    .effect-status strong {
+      color: var(--yellow);
+    }
+
+    .effect-buttons {
+      justify-content: center;
+    }
+
+    /* =========================
+       SEQUENCES
+    ========================= */
 
     .sequence-buttons {
       display: flex;
@@ -301,38 +490,60 @@
       gap: 10px;
     }
 
-    /* EMERGENCY */
+    /* =========================
+       EMERGENCY
+    ========================= */
 
     .emergency-panel {
       text-align: center;
-      border-color: rgba(239, 68, 68, 0.55);
+
+      border-color:
+        rgba(239, 68, 68, 0.55);
+
+      background:
+        linear-gradient(
+          180deg,
+          rgba(127, 29, 29, 0.12),
+          rgba(17, 24, 39, 0.96)
+        );
     }
 
     .emergency {
-      width: min(400px, 100%);
-      padding: 18px;
-      font-size: 18px;
+      width: min(450px, 100%);
+
+      padding: 18px 30px;
+
       background: var(--red);
-      box-shadow: 0 0 20px rgba(239, 68, 68, 0.25);
+
+      font-size: 18px;
+
+      box-shadow:
+        0 0 22px rgba(239, 68, 68, 0.28);
     }
 
-    /* LOG */
+    /* =========================
+       LOG
+    ========================= */
 
     .log {
-      margin-top: 15px;
-      background: #020617;
+      height: 210px;
+
+      overflow-y: auto;
+
+      padding: 15px;
+
       border: 1px solid var(--border);
       border-radius: 10px;
-      height: 180px;
-      overflow-y: auto;
-      padding: 15px;
+
+      background: #020617;
+
       font-family: Consolas, monospace;
       font-size: 13px;
     }
 
     .log-entry {
-      margin-bottom: 7px;
-      color: #cbd5e1;
+      margin-bottom: 8px;
+      line-height: 1.4;
     }
 
     .log-time {
@@ -347,12 +558,21 @@
       color: var(--red);
     }
 
-    @media (max-width: 800px) {
+    .log-info {
+      color: #60a5fa;
+    }
+
+    /* =========================
+       RESPONSIVE
+    ========================= */
+
+    @media (max-width: 850px) {
+
       .grid {
         grid-template-columns: 1fr;
       }
 
-      .full {
+      .panel.full {
         grid-column: auto;
       }
 
@@ -369,6 +589,54 @@
       .motor {
         margin: auto;
       }
+
+      .light-strip {
+        gap: 8px;
+        padding: 16px;
+      }
+
+    }
+
+    @media (max-width: 550px) {
+
+      main {
+        padding: 15px;
+      }
+
+      header {
+        padding: 18px;
+      }
+
+      .panel {
+        padding: 18px;
+      }
+
+      .device {
+        align-items: flex-start;
+        flex-wrap: wrap;
+      }
+
+      .device .buttons {
+        width: 100%;
+      }
+
+      .device .buttons button {
+        flex: 1;
+      }
+
+      .light-strip {
+        gap: 5px;
+        padding: 10px;
+      }
+
+      .channel {
+        gap: 6px;
+      }
+
+      .bulb {
+        border-width: 2px;
+      }
+
     }
   </style>
 </head>
@@ -376,12 +644,14 @@
 <body>
 
 <header>
+
   <div class="header-content">
 
     <div>
       <h1>Control de Carroza Técnica</h1>
+
       <div class="subtitle">
-        Simulador de iluminación y movimientos
+        Simulador de iluminación, movimientos y secuencias
       </div>
     </div>
 
@@ -391,23 +661,30 @@
     </div>
 
   </div>
+
 </header>
+
 
 <main>
 
   <div class="grid">
 
-    <!-- ILUMINACION -->
+    <!-- =========================
+         ILUMINACIÓN GENERAL
+    ========================== -->
 
     <section class="panel">
 
-      <h2>💡 Iluminación</h2>
+      <h2>💡 Iluminación general</h2>
 
       <div class="device">
 
-        <div class="lamp" id="frontLamp"></div>
+        <div
+          class="lamp"
+          id="frontLamp">
+        </div>
 
-        <div style="flex:1">
+        <div class="device-info">
 
           <div class="device-name">
             Luces frontales
@@ -439,11 +716,15 @@
 
       </div>
 
+
       <div class="device">
 
-        <div class="lamp" id="sideLamp"></div>
+        <div
+          class="lamp"
+          id="sideLamp">
+        </div>
 
-        <div style="flex:1">
+        <div class="device-info">
 
           <div class="device-name">
             Luces laterales
@@ -478,7 +759,9 @@
     </section>
 
 
-    <!-- MOTOR -->
+    <!-- =========================
+         MOTOR
+    ========================== -->
 
     <section class="panel">
 
@@ -486,21 +769,26 @@
 
       <div class="motor-container">
 
-        <div
-          class="motor"
-          id="motor">
+        <div class="motor-wrapper">
+
+          <div
+            class="motor"
+            id="motor">
+          </div>
+
+          <span
+            class="status"
+            id="motorStatus">
+            DETENIDO
+          </span>
+
         </div>
+
 
         <div class="motor-controls">
 
           <div class="device-name">
-            Estado
-          </div>
-
-          <div
-            class="status"
-            id="motorStatus">
-            DETENIDO
+            Control de movimiento
           </div>
 
           <div class="buttons">
@@ -525,11 +813,14 @@
 
           </div>
 
+
           <div class="range-container">
 
             <div class="range-info">
 
-              <span>Velocidad</span>
+              <span>
+                Velocidad del motor
+              </span>
 
               <strong id="speedValue">
                 50%
@@ -555,11 +846,170 @@
     </section>
 
 
-    <!-- SECUENCIAS -->
+    <!-- =========================
+         BARRIDO DE LUCES
+    ========================== -->
 
     <section class="panel full">
 
-      <h2>🎬 Secuencias</h2>
+      <h2>✨ Barrido de luces</h2>
+
+      <p class="panel-description">
+        Cada punto representa un canal de iluminación.
+        El efecto simula la secuencia que posteriormente
+        podrá ejecutar el controlador electrónico.
+      </p>
+
+
+      <div class="light-simulator">
+
+        <div
+          class="light-strip"
+          id="lightStrip">
+
+          <div class="channel">
+            <div class="bulb" data-index="0"></div>
+            <span class="channel-number">CH 01</span>
+          </div>
+
+          <div class="channel">
+            <div class="bulb" data-index="1"></div>
+            <span class="channel-number">CH 02</span>
+          </div>
+
+          <div class="channel">
+            <div class="bulb" data-index="2"></div>
+            <span class="channel-number">CH 03</span>
+          </div>
+
+          <div class="channel">
+            <div class="bulb" data-index="3"></div>
+            <span class="channel-number">CH 04</span>
+          </div>
+
+          <div class="channel">
+            <div class="bulb" data-index="4"></div>
+            <span class="channel-number">CH 05</span>
+          </div>
+
+          <div class="channel">
+            <div class="bulb" data-index="5"></div>
+            <span class="channel-number">CH 06</span>
+          </div>
+
+          <div class="channel">
+            <div class="bulb" data-index="6"></div>
+            <span class="channel-number">CH 07</span>
+          </div>
+
+          <div class="channel">
+            <div class="bulb" data-index="7"></div>
+            <span class="channel-number">CH 08</span>
+          </div>
+
+        </div>
+
+
+        <div
+          class="effect-status"
+          id="effectStatus">
+
+          Efecto:
+          <strong>DETENIDO</strong>
+
+        </div>
+
+
+        <div class="buttons effect-buttons">
+
+          <button
+            class="btn-primary"
+            onclick="startSweep('right')">
+            Barrido →
+          </button>
+
+          <button
+            class="btn-primary"
+            onclick="startSweep('left')">
+            ← Barrido
+          </button>
+
+          <button
+            class="btn-primary"
+            onclick="startPingPong()">
+            ⇄ Ida y vuelta
+          </button>
+
+          <button
+            class="btn-primary"
+            onclick="startBlink()">
+            ✨ Parpadeo
+          </button>
+
+          <button
+            class="btn-on"
+            onclick="allEffectLights(true)">
+            Todos ON
+          </button>
+
+          <button
+            class="btn-off"
+            onclick="allEffectLights(false)">
+            Todos OFF
+          </button>
+
+          <button
+            class="btn-secondary"
+            onclick="stopLightEffect()">
+            ■ Detener
+          </button>
+
+        </div>
+
+
+        <div class="range-container">
+
+          <div class="range-info">
+
+            <span>
+              Velocidad del efecto
+            </span>
+
+            <strong id="effectSpeedValue">
+              150 ms
+            </strong>
+
+          </div>
+
+          <input
+            id="effectSpeed"
+            type="range"
+            min="50"
+            max="500"
+            step="25"
+            value="150"
+            oninput="changeEffectSpeed(this.value)"
+          />
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- =========================
+         SECUENCIAS
+    ========================== -->
+
+    <section class="panel full">
+
+      <h2>🎬 Secuencias de la carroza</h2>
+
+      <p class="panel-description">
+        Simulación de una secuencia coordinada entre
+        iluminación y movimiento.
+      </p>
 
       <div class="sequence-buttons">
 
@@ -571,8 +1021,8 @@
 
         <button
           class="btn-primary"
-          onclick="lightSequence()">
-          ✨ Efecto de luces
+          onclick="lightShowSequence()">
+          ✨ Show de luces
         </button>
 
         <button
@@ -586,11 +1036,18 @@
     </section>
 
 
-    <!-- EMERGENCIA -->
+    <!-- =========================
+         STOP ALL
+    ========================== -->
 
     <section class="panel full emergency-panel">
 
-      <h2>Control general</h2>
+      <h2>⛔ Control general</h2>
+
+      <p class="panel-description">
+        Detiene movimientos, secuencias y efectos
+        de iluminación.
+      </p>
 
       <button
         class="emergency"
@@ -601,7 +1058,9 @@
     </section>
 
 
-    <!-- LOG -->
+    <!-- =========================
+         LOG
+    ========================== -->
 
     <section class="panel full">
 
@@ -621,6 +1080,10 @@
 
 <script>
 
+  /* =========================================================
+     STATE
+  ========================================================= */
+
   const state = {
 
     lights: {
@@ -636,22 +1099,37 @@
 
   };
 
+
   let sequenceTimers = [];
 
+  let lightEffectTimer = null;
 
-  /* =========================
-     LIGHTS
-  ========================= */
+  let effectSpeed = 150;
+
+  let currentLight = 0;
+
+  let sweepDirection = 1;
+
+  let currentEffect = null;
+
+
+  /* =========================================================
+     GENERAL LIGHTS
+  ========================================================= */
 
   function setLight(id, enabled) {
 
     state.lights[id] = enabled;
 
     const lamp =
-      document.getElementById(id + "Lamp");
+      document.getElementById(
+        id + "Lamp"
+      );
 
     const status =
-      document.getElementById(id + "Status");
+      document.getElementById(
+        id + "Status"
+      );
 
     lamp.classList.toggle(
       "on",
@@ -668,28 +1146,34 @@
       enabled
     );
 
+
     const name =
       id === "front"
         ? "Luces frontales"
         : "Luces laterales";
 
+
     addLog(
       `${name} → ${enabled ? "ON" : "OFF"}`,
       "ok"
     );
+
   }
 
 
-  /* =========================
+  /* =========================================================
      MOTOR
-  ========================= */
+  ========================================================= */
 
   function startMotor(direction) {
 
     state.motor.running = true;
-    state.motor.direction = direction;
+
+    state.motor.direction =
+      direction;
 
     updateMotor();
+
 
     addLog(
       `Motor → ${
@@ -699,19 +1183,26 @@
       } (${state.motor.speed}%)`,
       "ok"
     );
+
   }
 
 
-  function stopMotor() {
+  function stopMotor(showLog = true) {
 
     state.motor.running = false;
 
     updateMotor();
 
-    addLog(
-      "Motor → STOP",
-      "stop"
-    );
+
+    if (showLog) {
+
+      addLog(
+        "Motor → STOP",
+        "stop"
+      );
+
+    }
+
   }
 
 
@@ -720,43 +1211,52 @@
     state.motor.speed =
       Number(value);
 
+
     document.getElementById(
       "speedValue"
     ).textContent =
       value + "%";
 
+
     updateMotorSpeed();
+
 
     if (state.motor.running) {
 
       addLog(
         `Motor → VELOCIDAD ${value}%`,
-        "ok"
+        "info"
       );
 
     }
+
   }
 
 
   function updateMotor() {
 
     const motor =
-      document.getElementById("motor");
+      document.getElementById(
+        "motor"
+      );
 
     const status =
       document.getElementById(
         "motorStatus"
       );
 
+
     motor.classList.toggle(
       "running",
       state.motor.running
     );
 
+
     motor.classList.toggle(
       "reverse",
       state.motor.direction === "reverse"
     );
+
 
     if (!state.motor.running) {
 
@@ -767,7 +1267,8 @@
         "running"
       );
 
-    } else {
+    }
+    else {
 
       status.textContent =
         state.motor.direction === "forward"
@@ -780,122 +1281,599 @@
 
     }
 
+
     updateMotorSpeed();
+
   }
 
 
   function updateMotorSpeed() {
 
     const motor =
-      document.getElementById("motor");
+      document.getElementById(
+        "motor"
+      );
+
 
     /*
-      10% = lento
-      100% = rápido
+      Convierte el porcentaje de velocidad
+      en duración de la animación.
+
+      Más porcentaje = menos duración
+      = giro visual más rápido.
     */
 
     const duration =
       2.2 -
-      (state.motor.speed / 100) * 1.9;
+      (state.motor.speed / 100)
+      * 1.9;
+
 
     motor.style.setProperty(
       "--motor-speed",
       duration + "s"
     );
+
   }
 
 
-  /* =========================
-     SEQUENCES
-  ========================= */
+  /* =========================================================
+     EFFECT LIGHT HELPERS
+  ========================================================= */
 
-  function schedule(callback, delay) {
+  function getEffectLights() {
+
+    return [
+      ...document.querySelectorAll(
+        "#lightStrip .bulb"
+      )
+    ];
+
+  }
+
+
+  function clearEffectLights() {
+
+    getEffectLights().forEach(
+      light => {
+
+        light.classList.remove(
+          "active"
+        );
+
+      }
+    );
+
+  }
+
+
+  function activateEffectLight(index) {
+
+    const lights =
+      getEffectLights();
+
+
+    clearEffectLights();
+
+
+    if (lights[index]) {
+
+      lights[index].classList.add(
+        "active"
+      );
+
+    }
+
+  }
+
+
+  function setEffectStatus(text) {
+
+    document.getElementById(
+      "effectStatus"
+    ).innerHTML =
+      `Efecto: <strong>${text}</strong>`;
+
+  }
+
+
+  /* =========================================================
+     STOP LIGHT EFFECT
+  ========================================================= */
+
+  function stopLightEffect(
+    showLog = true
+  ) {
+
+    if (lightEffectTimer) {
+
+      clearInterval(
+        lightEffectTimer
+      );
+
+      lightEffectTimer = null;
+
+    }
+
+
+    currentEffect = null;
+
+    setEffectStatus(
+      "DETENIDO"
+    );
+
+
+    if (showLog) {
+
+      addLog(
+        "Efecto de iluminación detenido",
+        "stop"
+      );
+
+    }
+
+  }
+
+
+  /* =========================================================
+     SWEEP
+  ========================================================= */
+
+  function startSweep(direction) {
+
+    stopLightEffect(false);
+
+
+    const lights =
+      getEffectLights();
+
+
+    currentEffect =
+      direction === "right"
+        ? "sweep-right"
+        : "sweep-left";
+
+
+    currentLight =
+      direction === "right"
+        ? 0
+        : lights.length - 1;
+
+
+    const increment =
+      direction === "right"
+        ? 1
+        : -1;
+
+
+    setEffectStatus(
+      direction === "right"
+        ? "BARRIDO →"
+        : "← BARRIDO"
+    );
+
+
+    activateEffectLight(
+      currentLight
+    );
+
+
+    lightEffectTimer =
+      setInterval(() => {
+
+        currentLight +=
+          increment;
+
+
+        if (
+          currentLight >=
+          lights.length
+        ) {
+
+          currentLight = 0;
+
+        }
+
+
+        if (currentLight < 0) {
+
+          currentLight =
+            lights.length - 1;
+
+        }
+
+
+        activateEffectLight(
+          currentLight
+        );
+
+      }, effectSpeed);
+
+
+    addLog(
+      direction === "right"
+        ? "Barrido → iniciado"
+        : "Barrido ← iniciado",
+      "info"
+    );
+
+  }
+
+
+  /* =========================================================
+     PING PONG
+  ========================================================= */
+
+  function startPingPong() {
+
+    stopLightEffect(false);
+
+
+    const lights =
+      getEffectLights();
+
+
+    currentEffect =
+      "pingpong";
+
+
+    currentLight = 0;
+
+    sweepDirection = 1;
+
+
+    setEffectStatus(
+      "IDA Y VUELTA"
+    );
+
+
+    activateEffectLight(
+      currentLight
+    );
+
+
+    lightEffectTimer =
+      setInterval(() => {
+
+        currentLight +=
+          sweepDirection;
+
+
+        if (
+          currentLight >=
+          lights.length - 1
+        ) {
+
+          currentLight =
+            lights.length - 1;
+
+          sweepDirection = -1;
+
+        }
+
+
+        if (
+          currentLight <= 0
+        ) {
+
+          currentLight = 0;
+
+          sweepDirection = 1;
+
+        }
+
+
+        activateEffectLight(
+          currentLight
+        );
+
+      }, effectSpeed);
+
+
+    addLog(
+      "Barrido ida y vuelta iniciado",
+      "info"
+    );
+
+  }
+
+
+  /* =========================================================
+     BLINK
+  ========================================================= */
+
+  function startBlink() {
+
+    stopLightEffect(false);
+
+
+    currentEffect =
+      "blink";
+
+
+    let enabled =
+      false;
+
+
+    setEffectStatus(
+      "PARPADEO"
+    );
+
+
+    lightEffectTimer =
+      setInterval(() => {
+
+        enabled =
+          !enabled;
+
+
+        getEffectLights().forEach(
+          light => {
+
+            light.classList.toggle(
+              "active",
+              enabled
+            );
+
+          }
+        );
+
+      }, effectSpeed * 2);
+
+
+    addLog(
+      "Parpadeo iniciado",
+      "info"
+    );
+
+  }
+
+
+  /* =========================================================
+     ALL EFFECT LIGHTS
+  ========================================================= */
+
+  function allEffectLights(
+    enabled
+  ) {
+
+    stopLightEffect(false);
+
+
+    getEffectLights().forEach(
+      light => {
+
+        light.classList.toggle(
+          "active",
+          enabled
+        );
+
+      }
+    );
+
+
+    setEffectStatus(
+      enabled
+        ? "TODOS ENCENDIDOS"
+        : "TODOS APAGADOS"
+    );
+
+
+    addLog(
+      enabled
+        ? "Canales → TODOS ON"
+        : "Canales → TODOS OFF",
+      "ok"
+    );
+
+  }
+
+
+  /* =========================================================
+     EFFECT SPEED
+  ========================================================= */
+
+  function changeEffectSpeed(
+    value
+  ) {
+
+    effectSpeed =
+      Number(value);
+
+
+    document.getElementById(
+      "effectSpeedValue"
+    ).textContent =
+      effectSpeed + " ms";
+
+
+    /*
+      Reiniciamos el efecto actual
+      para aplicar inmediatamente
+      la nueva velocidad.
+    */
+
+    const effect =
+      currentEffect;
+
+
+    if (!effect) {
+      return;
+    }
+
+
+    if (
+      effect ===
+      "sweep-right"
+    ) {
+
+      startSweep(
+        "right"
+      );
+
+    }
+    else if (
+      effect ===
+      "sweep-left"
+    ) {
+
+      startSweep(
+        "left"
+      );
+
+    }
+    else if (
+      effect ===
+      "pingpong"
+    ) {
+
+      startPingPong();
+
+    }
+    else if (
+      effect ===
+      "blink"
+    ) {
+
+      startBlink();
+
+    }
+
+  }
+
+
+  /* =========================================================
+     SEQUENCE TIMER
+  ========================================================= */
+
+  function schedule(
+    callback,
+    delay
+  ) {
 
     const timer =
-      setTimeout(callback, delay);
+      setTimeout(
+        callback,
+        delay
+      );
 
-    sequenceTimers.push(timer);
+
+    sequenceTimers.push(
+      timer
+    );
+
   }
 
+
+  /* =========================================================
+     PRESENTATION SEQUENCE
+  ========================================================= */
 
   function presentationSequence() {
 
     stopSequence(false);
 
+    stopLightEffect(false);
+
+
     addLog(
       "Secuencia PRESENTACIÓN iniciada",
-      "ok"
+      "info"
     );
 
-    setLight("front", true);
+
+    /*
+      Paso 1
+      Luces frontales.
+    */
+
+    setLight(
+      "front",
+      true
+    );
+
+
+    /*
+      Paso 2
+      Barrido.
+    */
 
     schedule(() => {
-      setLight("side", true);
-    }, 1000);
 
-    schedule(() => {
-      startMotor("forward");
-    }, 2000);
-
-    schedule(() => {
-      changeSpeed(70);
-    }, 3000);
-
-    schedule(() => {
-      stopMotor();
-    }, 6000);
-
-    schedule(() => {
-      setLight("side", false);
-    }, 7000);
-
-    schedule(() => {
-      setLight("front", false);
-
-      addLog(
-        "Secuencia PRESENTACIÓN finalizada",
-        "ok"
+      startSweep(
+        "right"
       );
 
-    }, 8000);
-  }
+    }, 1000);
 
 
-  function lightSequence() {
-
-    stopSequence(false);
-
-    addLog(
-      "Secuencia LUCES iniciada",
-      "ok"
-    );
-
-    for (
-      let i = 0;
-      i < 8;
-      i++
-    ) {
-
-      schedule(() => {
-
-        const enabled =
-          i % 2 === 0;
-
-        setLight(
-          "front",
-          enabled
-        );
-
-        setLight(
-          "side",
-          !enabled
-        );
-
-      }, i * 500);
-
-    }
+    /*
+      Paso 3
+      Luces laterales.
+    */
 
     schedule(() => {
+
+      setLight(
+        "side",
+        true
+      );
+
+    }, 2000);
+
+
+    /*
+      Paso 4
+      Motor.
+    */
+
+    schedule(() => {
+
+      changeSpeed(
+        70
+      );
+
+      startMotor(
+        "forward"
+      );
+
+    }, 3000);
+
+
+    /*
+      Paso 5
+      Ida y vuelta.
+    */
+
+    schedule(() => {
+
+      startPingPong();
+
+    }, 5000);
+
+
+    /*
+      Paso 6
+      Motor stop.
+    */
+
+    schedule(() => {
+
+      stopMotor();
+
+    }, 8000);
+
+
+    /*
+      Paso 7
+      Apagar.
+    */
+
+    schedule(() => {
+
+      stopLightEffect(false);
+
+      clearEffectLights();
 
       setLight(
         "front",
@@ -907,25 +1885,100 @@
         false
       );
 
+
       addLog(
-        "Secuencia LUCES finalizada",
+        "Secuencia PRESENTACIÓN finalizada",
         "ok"
       );
 
-    }, 4200);
+    }, 9000);
+
   }
 
+
+  /* =========================================================
+     LIGHT SHOW SEQUENCE
+  ========================================================= */
+
+  function lightShowSequence() {
+
+    stopSequence(false);
+
+    stopLightEffect(false);
+
+
+    addLog(
+      "Secuencia SHOW DE LUCES iniciada",
+      "info"
+    );
+
+
+    startSweep(
+      "right"
+    );
+
+
+    schedule(() => {
+
+      startSweep(
+        "left"
+      );
+
+    }, 2500);
+
+
+    schedule(() => {
+
+      startPingPong();
+
+    }, 5000);
+
+
+    schedule(() => {
+
+      startBlink();
+
+    }, 8000);
+
+
+    schedule(() => {
+
+      stopLightEffect(false);
+
+      clearEffectLights();
+
+
+      addLog(
+        "Secuencia SHOW DE LUCES finalizada",
+        "ok"
+      );
+
+    }, 10500);
+
+  }
+
+
+  /* =========================================================
+     STOP SEQUENCE
+  ========================================================= */
 
   function stopSequence(
     showLog = true
   ) {
 
     sequenceTimers.forEach(
-      timer =>
-        clearTimeout(timer)
+      timer => {
+
+        clearTimeout(
+          timer
+        );
+
+      }
     );
 
+
     sequenceTimers = [];
+
 
     if (showLog) {
 
@@ -935,39 +1988,54 @@
       );
 
     }
+
   }
 
 
-  /* =========================
+  /* =========================================================
      STOP ALL
-  ========================= */
+  ========================================================= */
 
   function stopAll() {
 
     stopSequence(false);
+
+    stopLightEffect(false);
+
+    clearEffectLights();
+
 
     setLight(
       "front",
       false
     );
 
+
     setLight(
       "side",
       false
     );
 
-    stopMotor();
+
+    stopMotor(false);
+
+
+    setEffectStatus(
+      "DETENIDO"
+    );
+
 
     addLog(
       "DETENER TODO ejecutado",
       "stop"
     );
+
   }
 
 
-  /* =========================
+  /* =========================================================
      LOG
-  ========================= */
+  ========================================================= */
 
   function addLog(
     message,
@@ -979,11 +2047,16 @@
         "commandLog"
       );
 
+
     const entry =
-      document.createElement("div");
+      document.createElement(
+        "div"
+      );
+
 
     entry.className =
       "log-entry";
+
 
     const now =
       new Date()
@@ -991,27 +2064,49 @@
           "es-AR"
         );
 
-    entry.innerHTML =
-      `<span class="log-time">${now}</span>
-       &nbsp;
-       <span class="${
-         type === "stop"
-           ? "log-stop"
-           : "log-ok"
-       }">${message}</span>`;
 
-    log.prepend(entry);
+    let className =
+      "log-ok";
+
+
+    if (type === "stop") {
+      className =
+        "log-stop";
+    }
+
+
+    if (type === "info") {
+      className =
+        "log-info";
+    }
+
+
+    entry.innerHTML =
+      `<span class="log-time">
+        ${now}
+       </span>
+       &nbsp;
+       <span class="${className}">
+        ${message}
+       </span>`;
+
+
+    log.prepend(
+      entry
+    );
+
   }
 
 
-  /* =========================
+  /* =========================================================
      INITIALIZATION
-  ========================= */
+  ========================================================= */
 
   updateMotorSpeed();
 
+
   addLog(
-    "Simulador iniciado",
+    "Sistema de simulación iniciado",
     "ok"
   );
 
