@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Control de Carroza Técnica</title>
+
+  <style>
+    :root {
+      --bg: #0b1120;
+      --panel: #111827;
+      --panel-light: #1f2937;
+      --border: #334155;
+
+      --text: #f8fafc;
+      --muted: #94a3b8;
+
+      --green: #22c55e;
+      --red: #ef4444;
+      --yellow: #facc15;
+      --blue: #3b82f6;
+      --orange: #f97316;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, Helvetica, sans-serif;
+      background:
+        radial-gradient(circle at top, #172554, var(--bg) 45%);
+      color: var(--text);
+    }
+
+    /* HEADER */
+
+    header {
+      padding: 28px 30px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(15, 23, 42, 0.92);
+    }
+
+    .header-content {
+      max-width: 1200px;
+      margin: auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 26px;
+    }
+
+    .subtitle {
+      margin-top: 6px;
+      color: var(--muted);
+    }
+
+    .connection {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--green);
+      font-weight: bold;
+    }
+
+    .connection-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 12px var(--green);
+    }
+
+    /* LAYOUT */
+
+    main {
+      max-width: 1200px;
+      margin: auto;
+      padding: 30px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 22px;
+    }
+
+    .panel {
+      background: rgba(17, 24, 39, 0.95);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .panel h2 {
+      margin-top: 0;
+      margin-bottom: 20px;
+      font-size: 18px;
+    }
+
+    .full {
+      grid-column: 1 / -1;
+    }
+
+    /* DEVICE */
+
+    .device {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--border);
+      gap: 20px;
+    }
+
+    .device:last-child {
+      border-bottom: none;
+    }
+
+    .device-name {
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+
+    .status {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .status.on {
+      color: var(--green);
+    }
+
+    .status.running {
+      color: var(--yellow);
+    }
+
+    /* LIGHT */
+
+    .lamp {
+      width: 45px;
+      height: 45px;
+      border-radius: 50%;
+      background: #374151;
+      border: 3px solid #475569;
+      transition: 0.25s;
+      flex-shrink: 0;
+    }
+
+    .lamp.on {
+      background: var(--yellow);
+      border-color: #fde68a;
+      box-shadow:
+        0 0 15px var(--yellow),
+        0 0 35px rgba(250, 204, 21, 0.65);
+    }
+
+    /* BUTTONS */
+
+    button {
+      border: 0;
+      border-radius: 8px;
+      padding: 10px 16px;
+      font-weight: bold;
+      cursor: pointer;
+      color: white;
+      transition:
+        transform 0.15s,
+        opacity 0.15s;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+    }
+
+    button:active {
+      transform: scale(0.97);
+    }
+
+    .btn-on {
+      background: #15803d;
+    }
+
+    .btn-off {
+      background: #b91c1c;
+    }
+
+    .btn-primary {
+      background: #2563eb;
+    }
+
+    .btn-secondary {
+      background: #475569;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    /* MOTOR */
+
+    .motor-container {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .motor {
+      width: 100px;
+      height: 100px;
+      border: 8px solid #475569;
+      border-radius: 50%;
+      position: relative;
+      background: #1e293b;
+      flex-shrink: 0;
+    }
+
+    .motor::before,
+    .motor::after {
+      content: "";
+      position: absolute;
+      background: #94a3b8;
+      left: 50%;
+      top: 50%;
+      transform-origin: center;
+    }
+
+    .motor::before {
+      width: 6px;
+      height: 70px;
+      margin-left: -3px;
+      margin-top: -35px;
+    }
+
+    .motor::after {
+      width: 70px;
+      height: 6px;
+      margin-left: -35px;
+      margin-top: -3px;
+    }
+
+    .motor.running {
+      border-color: var(--yellow);
+      box-shadow: 0 0 20px rgba(250, 204, 21, 0.4);
+      animation: rotateMotor var(--motor-speed, 1s) linear infinite;
+    }
+
+    .motor.reverse {
+      animation-direction: reverse;
+    }
+
+    @keyframes rotateMotor {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .motor-controls {
+      flex: 1;
+    }
+
+    .motor-controls .buttons {
+      margin: 15px 0 20px;
+    }
+
+    /* RANGE */
+
+    .range-container {
+      margin-top: 15px;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--blue);
+    }
+
+    .range-info {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    /* SEQUENCES */
+
+    .sequence-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    /* EMERGENCY */
+
+    .emergency-panel {
+      text-align: center;
+      border-color: rgba(239, 68, 68, 0.55);
+    }
+
+    .emergency {
+      width: min(400px, 100%);
+      padding: 18px;
+      font-size: 18px;
+      background: var(--red);
+      box-shadow: 0 0 20px rgba(239, 68, 68, 0.25);
+    }
+
+    /* LOG */
+
+    .log {
+      margin-top: 15px;
+      background: #020617;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      height: 180px;
+      overflow-y: auto;
+      padding: 15px;
+      font-family: Consolas, monospace;
+      font-size: 13px;
+    }
+
+    .log-entry {
+      margin-bottom: 7px;
+      color: #cbd5e1;
+    }
+
+    .log-time {
+      color: #64748b;
+    }
+
+    .log-ok {
+      color: var(--green);
+    }
+
+    .log-stop {
+      color: var(--red);
+    }
+
+    @media (max-width: 800px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .full {
+        grid-column: auto;
+      }
+
+      .header-content {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .motor-container {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .motor {
+        margin: auto;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <div class="header-content">
+
+    <div>
+      <h1>Control de Carroza Técnica</h1>
+      <div class="subtitle">
+        Simulador de iluminación y movimientos
+      </div>
+    </div>
+
+    <div class="connection">
+      <span class="connection-dot"></span>
+      SIMULADOR CONECTADO
+    </div>
+
+  </div>
+</header>
+
+<main>
+
+  <div class="grid">
+
+    <!-- ILUMINACION -->
+
+    <section class="panel">
+
+      <h2>💡 Iluminación</h2>
+
+      <div class="device">
+
+        <div class="lamp" id="frontLamp"></div>
+
+        <div style="flex:1">
+
+          <div class="device-name">
+            Luces frontales
+          </div>
+
+          <div
+            class="status"
+            id="frontStatus">
+            APAGADAS
+          </div>
+
+        </div>
+
+        <div class="buttons">
+
+          <button
+            class="btn-on"
+            onclick="setLight('front', true)">
+            ON
+          </button>
+
+          <button
+            class="btn-off"
+            onclick="setLight('front', false)">
+            OFF
+          </button>
+
+        </div>
+
+      </div>
+
+      <div class="device">
+
+        <div class="lamp" id="sideLamp"></div>
+
+        <div style="flex:1">
+
+          <div class="device-name">
+            Luces laterales
+          </div>
+
+          <div
+            class="status"
+            id="sideStatus">
+            APAGADAS
+          </div>
+
+        </div>
+
+        <div class="buttons">
+
+          <button
+            class="btn-on"
+            onclick="setLight('side', true)">
+            ON
+          </button>
+
+          <button
+            class="btn-off"
+            onclick="setLight('side', false)">
+            OFF
+          </button>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- MOTOR -->
+
+    <section class="panel">
+
+      <h2>⚙️ Motor principal</h2>
+
+      <div class="motor-container">
+
+        <div
+          class="motor"
+          id="motor">
+        </div>
+
+        <div class="motor-controls">
+
+          <div class="device-name">
+            Estado
+          </div>
+
+          <div
+            class="status"
+            id="motorStatus">
+            DETENIDO
+          </div>
+
+          <div class="buttons">
+
+            <button
+              class="btn-primary"
+              onclick="startMotor('forward')">
+              ▶ Adelante
+            </button>
+
+            <button
+              class="btn-secondary"
+              onclick="stopMotor()">
+              ■ Stop
+            </button>
+
+            <button
+              class="btn-primary"
+              onclick="startMotor('reverse')">
+              ◀ Reversa
+            </button>
+
+          </div>
+
+          <div class="range-container">
+
+            <div class="range-info">
+
+              <span>Velocidad</span>
+
+              <strong id="speedValue">
+                50%
+              </strong>
+
+            </div>
+
+            <input
+              id="motorSpeed"
+              type="range"
+              min="10"
+              max="100"
+              value="50"
+              oninput="changeSpeed(this.value)"
+            />
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- SECUENCIAS -->
+
+    <section class="panel full">
+
+      <h2>🎬 Secuencias</h2>
+
+      <div class="sequence-buttons">
+
+        <button
+          class="btn-primary"
+          onclick="presentationSequence()">
+          ▶ Presentación
+        </button>
+
+        <button
+          class="btn-primary"
+          onclick="lightSequence()">
+          ✨ Efecto de luces
+        </button>
+
+        <button
+          class="btn-secondary"
+          onclick="stopSequence()">
+          ■ Detener secuencia
+        </button>
+
+      </div>
+
+    </section>
+
+
+    <!-- EMERGENCIA -->
+
+    <section class="panel full emergency-panel">
+
+      <h2>Control general</h2>
+
+      <button
+        class="emergency"
+        onclick="stopAll()">
+        ⛔ DETENER TODO
+      </button>
+
+    </section>
+
+
+    <!-- LOG -->
+
+    <section class="panel full">
+
+      <h2>📋 Historial de comandos</h2>
+
+      <div
+        class="log"
+        id="commandLog">
+      </div>
+
+    </section>
+
+  </div>
+
+</main>
+
+
+<script>
+
+  const state = {
+
+    lights: {
+      front: false,
+      side: false
+    },
+
+    motor: {
+      running: false,
+      direction: "forward",
+      speed: 50
+    }
+
+  };
+
+  let sequenceTimers = [];
+
+
+  /* =========================
+     LIGHTS
+  ========================= */
+
+  function setLight(id, enabled) {
+
+    state.lights[id] = enabled;
+
+    const lamp =
+      document.getElementById(id + "Lamp");
+
+    const status =
+      document.getElementById(id + "Status");
+
+    lamp.classList.toggle(
+      "on",
+      enabled
+    );
+
+    status.textContent =
+      enabled
+        ? "ENCENDIDAS"
+        : "APAGADAS";
+
+    status.classList.toggle(
+      "on",
+      enabled
+    );
+
+    const name =
+      id === "front"
+        ? "Luces frontales"
+        : "Luces laterales";
+
+    addLog(
+      `${name} → ${enabled ? "ON" : "OFF"}`,
+      "ok"
+    );
+  }
+
+
+  /* =========================
+     MOTOR
+  ========================= */
+
+  function startMotor(direction) {
+
+    state.motor.running = true;
+    state.motor.direction = direction;
+
+    updateMotor();
+
+    addLog(
+      `Motor → ${
+        direction === "forward"
+          ? "ADELANTE"
+          : "REVERSA"
+      } (${state.motor.speed}%)`,
+      "ok"
+    );
+  }
+
+
+  function stopMotor() {
+
+    state.motor.running = false;
+
+    updateMotor();
+
+    addLog(
+      "Motor → STOP",
+      "stop"
+    );
+  }
+
+
+  function changeSpeed(value) {
+
+    state.motor.speed =
+      Number(value);
+
+    document.getElementById(
+      "speedValue"
+    ).textContent =
+      value + "%";
+
+    updateMotorSpeed();
+
+    if (state.motor.running) {
+
+      addLog(
+        `Motor → VELOCIDAD ${value}%`,
+        "ok"
+      );
+
+    }
+  }
+
+
+  function updateMotor() {
+
+    const motor =
+      document.getElementById("motor");
+
+    const status =
+      document.getElementById(
+        "motorStatus"
+      );
+
+    motor.classList.toggle(
+      "running",
+      state.motor.running
+    );
+
+    motor.classList.toggle(
+      "reverse",
+      state.motor.direction === "reverse"
+    );
+
+    if (!state.motor.running) {
+
+      status.textContent =
+        "DETENIDO";
+
+      status.classList.remove(
+        "running"
+      );
+
+    } else {
+
+      status.textContent =
+        state.motor.direction === "forward"
+          ? "GIRANDO ADELANTE"
+          : "GIRANDO EN REVERSA";
+
+      status.classList.add(
+        "running"
+      );
+
+    }
+
+    updateMotorSpeed();
+  }
+
+
+  function updateMotorSpeed() {
+
+    const motor =
+      document.getElementById("motor");
+
+    /*
+      10% = lento
+      100% = rápido
+    */
+
+    const duration =
+      2.2 -
+      (state.motor.speed / 100) * 1.9;
+
+    motor.style.setProperty(
+      "--motor-speed",
+      duration + "s"
+    );
+  }
+
+
+  /* =========================
+     SEQUENCES
+  ========================= */
+
+  function schedule(callback, delay) {
+
+    const timer =
+      setTimeout(callback, delay);
+
+    sequenceTimers.push(timer);
+  }
+
+
+  function presentationSequence() {
+
+    stopSequence(false);
+
+    addLog(
+      "Secuencia PRESENTACIÓN iniciada",
+      "ok"
+    );
+
+    setLight("front", true);
+
+    schedule(() => {
+      setLight("side", true);
+    }, 1000);
+
+    schedule(() => {
+      startMotor("forward");
+    }, 2000);
+
+    schedule(() => {
+      changeSpeed(70);
+    }, 3000);
+
+    schedule(() => {
+      stopMotor();
+    }, 6000);
+
+    schedule(() => {
+      setLight("side", false);
+    }, 7000);
+
+    schedule(() => {
+      setLight("front", false);
+
+      addLog(
+        "Secuencia PRESENTACIÓN finalizada",
+        "ok"
+      );
+
+    }, 8000);
+  }
+
+
+  function lightSequence() {
+
+    stopSequence(false);
+
+    addLog(
+      "Secuencia LUCES iniciada",
+      "ok"
+    );
+
+    for (
+      let i = 0;
+      i < 8;
+      i++
+    ) {
+
+      schedule(() => {
+
+        const enabled =
+          i % 2 === 0;
+
+        setLight(
+          "front",
+          enabled
+        );
+
+        setLight(
+          "side",
+          !enabled
+        );
+
+      }, i * 500);
+
+    }
+
+    schedule(() => {
+
+      setLight(
+        "front",
+        false
+      );
+
+      setLight(
+        "side",
+        false
+      );
+
+      addLog(
+        "Secuencia LUCES finalizada",
+        "ok"
+      );
+
+    }, 4200);
+  }
+
+
+  function stopSequence(
+    showLog = true
+  ) {
+
+    sequenceTimers.forEach(
+      timer =>
+        clearTimeout(timer)
+    );
+
+    sequenceTimers = [];
+
+    if (showLog) {
+
+      addLog(
+        "Secuencia detenida",
+        "stop"
+      );
+
+    }
+  }
+
+
+  /* =========================
+     STOP ALL
+  ========================= */
+
+  function stopAll() {
+
+    stopSequence(false);
+
+    setLight(
+      "front",
+      false
+    );
+
+    setLight(
+      "side",
+      false
+    );
+
+    stopMotor();
+
+    addLog(
+      "DETENER TODO ejecutado",
+      "stop"
+    );
+  }
+
+
+  /* =========================
+     LOG
+  ========================= */
+
+  function addLog(
+    message,
+    type = "ok"
+  ) {
+
+    const log =
+      document.getElementById(
+        "commandLog"
+      );
+
+    const entry =
+      document.createElement("div");
+
+    entry.className =
+      "log-entry";
+
+    const now =
+      new Date()
+        .toLocaleTimeString(
+          "es-AR"
+        );
+
+    entry.innerHTML =
+      `<span class="log-time">${now}</span>
+       &nbsp;
+       <span class="${
+         type === "stop"
+           ? "log-stop"
+           : "log-ok"
+       }">${message}</span>`;
+
+    log.prepend(entry);
+  }
+
+
+  /* =========================
+     INITIALIZATION
+  ========================= */
+
+  updateMotorSpeed();
+
+  addLog(
+    "Simulador iniciado",
+    "ok"
+  );
+
+</script>
+
+</body>
+</html>
