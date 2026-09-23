@@ -142,6 +142,7 @@ Ejemplo:
 ```
 
 El frontend no tendrá conocimiento de GPIO, direcciones IP del ESP32 ni protocolos físicos.
+El ESP32 es un microcontrolador en formato de sistema en un chip (SoC) de bajo costo y consumo energético que incluye Wi-Fi y Bluetooth integrados. Fue creado por la empresa Espressif Systems.Características principalesProcesador: Cuenta con un microprocesador de doble núcleo (o un solo núcleo según la variante) que funciona a una velocidad de hasta 240 MHz.Conectividad: Dispone de Wi-Fi de 2.4 GHz y Bluetooth de modo dual (incluyendo Bluetooth estándar y BLE de bajo consumo).Pines de E/S (GPIO): Incluye múltiples pines programables para conectar sensores, pantallas y motores, además de interfaces como I2C, UART, SPI, salidas PWM y convertidores analógicos a digital (ADC).Bajo consumo: Está diseñado para optimizar la energía, lo que permite usarlo en dispositivos que funcionan con baterías.
 
 Su único contrato será la API REST.
 
