@@ -24,6 +24,12 @@ public sealed class ComponentService(ComponentCatalog catalog, IComponentGateway
         return await gateway.ExecuteAsync(id, command, cancellationToken);
     }
 
+    public async Task<IReadOnlyList<ComponentSnapshot>> StopAllAndGetStatesAsync(CancellationToken cancellationToken)
+    {
+        var states = await gateway.StopAllAndGetStatesAsync(CancellationToken.None);
+        return states.Select(state => new ComponentSnapshot(catalog.Find(state.Id)!, state)).ToArray();
+    }
+
     // Once requested, a client disconnect must not prevent STOP ALL.
     public Task StopAllAsync(CancellationToken cancellationToken) => gateway.StopAllAsync(CancellationToken.None);
 }

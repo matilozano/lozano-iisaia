@@ -16,6 +16,8 @@ builder.Services.AddSwaggerGen(options =>
 });
 builder.Services.AddSingleton<ComponentCatalog>();
 builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddSingleton(new SimulatorFaultPlan(
+    builder.Configuration.GetSection("Simulator:Faults").Get<Dictionary<string, string>>()));
 builder.Services.AddScoped<IComponentService, ComponentService>();
 var mode = builder.Configuration["ComponentGateway:Mode"] ?? "Simulator";
 switch (mode)

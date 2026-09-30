@@ -177,3 +177,9 @@ selección por configuración
 El banco light_bank sigue Controller → ComponentService → IComponentGateway → SimulatorComponentGateway. SimulatedLightBank encapsula sus patrones y reloj monotónico dentro de Infrastructure; toda lectura/escritura se serializa con el lock existente del gateway. Las lecturas calculan la fase según tiempo transcurrido, sin tareas de fondo ni temporización del navegador. STOP ALL cancela los efectos bajo el mismo lock.
 
 Swagger se configura en Composition Root y se publica mediante middleware solo en Development; las operaciones siguen en Controllers. Los DTOs agregan campos opcionales del banco, omitidos en componentes existentes. El frontend muestra las instantáneas recibidas y mantiene únicamente el historial de sesión y valores de controles todavía no enviados.
+
+## Iteración 4: posiciones y errores
+
+SimulatedHydraulic y SimulatorFaultPlan viven en Infrastructure/Gateways. El primero integra el desplazamiento bajo el lock del gateway; el segundo rechaza comandos de forma determinista sin alterar la lógica normal. ComponentOperationException expresa códigos de dominio sin HTTP; DevicesController traduce esos códigos a respuestas HTTP sin conocer el simulador. La configuración del plan se inyecta en Composition Root.
+
+StopAllAndGetStatesAsync recorre la misma abstracción de servicio/gateway y captura estados con exclusión mutua. No se incorporan rutas particulares para hidráulico o servo. El frontend representa posiciones recibidas y conserva errores por componente. Contratos completos en DESARROLLO.md.

@@ -58,3 +58,9 @@ th, td { padding: 12px 10px; border-bottom: 1px solid #34434e; }
 th { color: #a3b6be; }
 .failure { color: #ff9da4; }
 @media(max-width:550px) { .bank, .history { padding: 16px 12px; } .channels { gap: 4px; } .channels > div { font-size: .6rem; } }
+.mechanism { display: block; width: 100%; height: 150px; }
+.device-online { color: #8bdec0; font-size: .7rem; }
+.error { overflow-wrap: anywhere; }
+.devices { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media(max-width:950px) { .devices { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media(max-width:550px) { .devices { grid-template-columns: 1fr; } }

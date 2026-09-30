@@ -27,7 +27,7 @@ El catálogo y las reglas de validación están en Domain. Application coordina 
 
 ## Iteraciones posteriores — pendientes
 
-El README describe el objetivo completo del proyecto, no funcionalidades incluidas en esta primera entrega. Swagger y banco de iluminación se incorporan en Iteración 3. Secuencias, simulación de fallas, ESP32, firmware, GPIO, hidráulicos, servos, autenticación y base de datos continúan pendientes.
+El README describe el objetivo completo del proyecto, no funcionalidades incluidas en esta primera entrega. Swagger y banco de iluminación se incorporan en Iteración 3. Hidráulico, servo y fallas se incorporan en Iteración 4. Secuencias, ESP32, firmware, GPIO, autenticación y base de datos continúan pendientes.
 
 La documentación anterior marcaba como implementadas funciones de iteraciones posteriores cuyos archivos ya no existían al comenzar esta tarea. Este plan refleja el alcance de Iteración 1 solicitado para el repositorio actual.
 
@@ -40,3 +40,6 @@ Refactor acotado a la estructura del Harness: Domain/Components, Domain/Commands
 ## Iteración 3 — Simulador visual y Swagger
 
 Swagger/OpenAPI en Development; banco lógico de ocho canales con efectos temporizados en SimulatorComponentGateway; panel visual con estados confirmados, control directo, sección de sistema e historial de sesión. Se conserva la arquitectura y el contrato de los componentes anteriores. Ver ITERACION-3.md para archivos, decisiones y verificación, y DESARROLLO.md para ejecución y contrato actualizado.
+## Iteración 4
+
+Implementados hydraulic-1 (HYDRAULIC_ACTUATOR), servo-1 (SERVO) y fallas reproducibles por configuración del simulador. STOP ALL ofrece una instantánea opcional sin romper su respuesta 204 histórica. Se mantienen servicios y gateway genéricos; no hay rutas específicas por dispositivo. Ver ITERACION-4.md y DESARROLLO.md para alcance, contrato, configuración y pruebas. ESP32, firmware, GPIO, autenticación, persistencia y secuencias complejas continúan fuera de alcance.

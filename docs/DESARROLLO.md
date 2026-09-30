@@ -1,4 +1,4 @@
-# Desarrollo local — Iteración 3
+# Desarrollo local — Iteración 4
 
 Requisitos: SDK .NET 9, Node.js 22 con npm y PowerShell 7 para los scripts de prueba.
 
@@ -38,6 +38,8 @@ Con la API iniciada:
 ./backend/smoke-test.ps1
 ./backend/contract-test.ps1
 ./backend/iteration-3-test.ps1
+./backend/iteration-4-test.ps1
+./backend/fault-test.ps1
 ```
 
 Suite del servicio y simulador, independiente del servidor HTTP:
@@ -78,7 +80,7 @@ rg 'Infrastructure|Controllers|Contracts|Microsoft.AspNetCore' backend/Carroza.A
 
 ## Contrato HTTP
 
-- GET `/api/devices`: lista de los cuatro componentes con estado actual.
+- GET `/api/devices`: lista de los seis componentes con estado actual.
 - GET `/api/devices/{id}`: estado de un componente; 404 si no existe.
 - POST `/api/devices/{id}/commands`: 200 con confirmación; 400 ante comando inválido; 404 si no existe.
 - POST `/api/devices/stop-all`: 204 tras apagar luces y canales, detener efectos y motor.
@@ -110,3 +112,24 @@ Sus estados agregan `channels` (ocho booleanos CH01..CH08), `effect` (NONE o efe
 El simulador utiliza tiempo monotónico: intervalo de paso = 1200 - 9 × effectSpeed milisegundos. Los barridos vuelven al inicio; ida y vuelta recorre 0..7..0 sin repetir extremos. Cambiar velocidad reinicia la fase del efecto. STOP_EFFECT congela los canales actuales. ALL_ON/ALL_OFF cancelan el efecto; STOP ALL apaga todos los canales y conserva effectSpeed. Al reiniciar el servidor se restablece velocidad 50 y canales apagados.
 
 El panel consulta cada 150 ms después de finalizar la consulta anterior, sin generar canales localmente. Con latencia alta puede omitir cuadros intermedios, pero cada patrón mostrado fue confirmado por API. Historial limitado a 100 entradas por sesión. Gateway SIMULATOR y controlador SIMULADO describen el único modo soportado; no representan telemetría de hardware.
+## Iteración 4: posiciones y fallas
+
+`hydraulic-1`, type `HYDRAULIC_ACTUATOR`: EXTEND, RETRACT y STOP sin parámetros. position es porcentaje 0..100; movement es STOPPED, EXTENDING o RETRACTING. limitExtended y limitRetracted indican extremos. Carrera completa: cinco segundos, 20 puntos porcentuales por segundo, calculados con reloj monotónico. STOP congela la posición alcanzada. Estado inicial: retraído.
+
+`servo-1`, type `SERVO`: `{ "action": "SET_POSITION", "position": 90 }`. Acepta números finitos 0..180, incluidos decimales; no admite speed ni direction. Inicial: 90°. STOP ALL conserva el último ángulo (no ordena movimiento a otra posición). Esta es una convención del simulador, no una garantía de seguridad de hardware.
+
+Se mantienen las rutas genéricas y los campos de componentes anteriores. Los campos nuevos se omiten cuando no aplican. STOP ALL conserva HTTP 204 por defecto. `POST /api/devices/stop-all?includeState=true` devuelve HTTP 200 con los seis estados tomados bajo el mismo bloqueo; el frontend utiliza esta opción y no calcula posiciones después de la parada.
+
+Fallas reproducibles configuradas al iniciar, sin modificar appsettings:
+
+```powershell
+dotnet run --project backend/Carroza.Api -- --Simulator:Faults:servo-1=TIMEOUT --Simulator:Faults:front-lights=DEVICE_OFFLINE
+```
+
+También se puede usar una sección `Simulator:Faults` de configuración, con IDs como claves y códigos como valores. Para recuperar, reiniciar sin esos argumentos/configuración. Se reinicia también el estado virtual. No hay fallas aleatorias ni endpoints especiales de simulación.
+
+Códigos: DEVICE_OFFLINE→503, TIMEOUT→504, INVALID_COMMAND→400, INVALID_PARAMETER→400, INTERNAL_ERROR→500. La respuesta mantiene `{status,error,message}` e identifica el componente. TIMEOUT simula el resultado de una espera agotada inmediatamente, sin demora ni ejecución tardía. Las fallas se aplican antes de ejecutar comandos válidos. Las validaciones de Domain ocurren primero. DEVICE_OFFLINE hace online=false en consultas; las otras fallas no impiden consultar. STOP ALL omite la inyección de fallas para detener el simulador, sin borrar la condición offline. Esto no modela una confirmación de parada de hardware desconectado.
+
+`fault-test.ps1` inicia una instancia aislada en 5081 con cinco fallas, comprueba códigos HTTP/no mutación y un componente sano, y detiene su proceso al finalizar. Requiere backend compilado y puerto libre; acepta `-Port`. No modifica archivos de configuración ni variables globales.
+
+Checklist visual adicional: extender/retraer/parar hidráulico y observar posición, aplicar servo 0/90/180, activar fallas con el comando anterior, confirmar offline y timeout sin cambio de ángulo, operar otro componente y comprobar STOP ALL. Repetir en notebook, tablet y móvil. Usar Swagger Try it out para comandos y consulta de estados.

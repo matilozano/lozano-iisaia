@@ -6,7 +6,7 @@ function Command($Id, $Body) {
 }
 try {
     $devices = Invoke-RestMethod "$BaseUrl/api/devices"
-    Assert ($devices.Count -eq 4) 'Se esperaban cuatro componentes.'
+    Assert ($devices.Count -eq 6) 'Se esperaban seis componentes.'
     foreach ($id in @('front-lights', 'side-lights')) {
         foreach ($action in @('on', 'off')) {
             $result = Command $id @{ action = $action }
@@ -31,6 +31,6 @@ try {
     Assert (@($devices | Where-Object { $_.state -notin @('off', 'stopped') -or $_.speed -ne 0 }).Count -eq 0) 'Parada general incompleta.'
     $bank = $devices | Where-Object id -eq 'main-light-bank'
     Assert ($bank.effect -eq 'NONE' -and @($bank.channels | Where-Object { $_ }).Count -eq 0) 'Banco no apagado.'
-    Write-Output 'OK: cuatro componentes, ambas luces ON/OFF, motor adelante/reversa a 70%, stop, consulta y STOP ALL.'
+    Write-Output 'OK: seis componentes, ambas luces ON/OFF, motor adelante/reversa a 70%, stop, consulta y STOP ALL.'
 }
 finally { Invoke-RestMethod "$BaseUrl/api/devices/stop-all" -Method Post | Out-Null }

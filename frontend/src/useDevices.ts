@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { request, type Command, type CommandResult, type Device } from './api';
+import { ApiError, request, type Command, type CommandResult, type Device } from './api';
 
 export interface HistoryEntry { time: string; component: string; command: string; result: string }
 
@@ -8,6 +8,7 @@ export function useDevices() {
   const [connected, setConnected] = useState<boolean | null>(null);
   const [error, setError] = useState('');
   const [connectionError, setConnectionError] = useState('');
+  const [componentErrors, setComponentErrors] = useState<Record<string, string>>({});
   const [pending, setPending] = useState('');
   const [confirmation, setConfirmation] = useState('');
   const [history, setHistory] = useState<HistoryEntry[]>([]);
@@ -45,12 +46,22 @@ export function useDevices() {
     try {
       const result = await request<CommandResult>(`devices/${device.id}/commands`, command);
       if (!result.success) throw new Error('El backend no confirmó el comando.');
-      record(device.id, [command.action, command.direction, command.speed === undefined ? '' : command.speed + '%'].filter(Boolean).join(' '), 'OK');
+      record(device.id, [command.action, command.direction, command.speed === undefined ? '' : command.speed + '%', command.position === undefined ? '' : command.position + '°'].filter(Boolean).join(' '), 'OK');
       if (version === generation.current) {
         setDevices(items => items.map(item => item.id === device.id ? { ...item, ...result.state } : item));
+        setComponentErrors(errors => ({ ...errors, [device.id]: '' }));
         setConnected(true); setConfirmation(`${device.name}: comando confirmado.`);
       }
-    } catch (e) { record(device.id, command.action, 'ERROR'); if (version === generation.current) setError(e instanceof Error ? e.message : String(e)); }
+    } catch (e) {
+      const message = `${device.name} (${device.id}): ${e instanceof Error ? e.message : String(e)}`;
+      record(device.id, command.action, e instanceof ApiError ? e.code : 'ERROR');
+      setComponentErrors(errors => ({ ...errors, [device.id]: message }));
+      if (version === generation.current) {
+        setError(message);
+        if (e instanceof ApiError && e.code === 'DEVICE_OFFLINE')
+          setDevices(items => items.map(item => item.id === device.id ? { ...item, online: false } : item));
+      }
+    }
     finally { busy.current = false; if (version === generation.current) setPending(''); }
   }
 
@@ -59,13 +70,12 @@ export function useDevices() {
     stopping.current = true; generation.current++;
     setPending('Deteniendo todos los componentes…'); setError('');
     try {
-      await request<void>('devices/stop-all', {});
-      // HTTP 204 confirms the documented all-off/stopped outcome; polling then refreshes it.
-      setDevices(items => items.map(item => ({ ...item, state: item.type === 'motor' ? 'stopped' : 'off', speed: 0, ...(item.type === 'light_bank' ? { channels: Array(8).fill(false), effect: 'NONE' } : {}) })));
+      const states = await request<Device[]>('devices/stop-all?includeState=true', {});
+      setDevices(states);
       record('TODOS', 'STOP ALL', 'OK');
-      setConnected(true); setConfirmation('Parada general confirmada. Luces y canales apagados; motor detenido.');
+      setConnected(true); setConfirmation('Parada general confirmada. Luces y canales apagados; motor y actuador detenidos; servo conserva posición.');
     } catch (e) { record('TODOS', 'STOP ALL', 'ERROR'); setError(e instanceof Error ? e.message : String(e)); }
     finally { stopping.current = false; setPending(''); }
   }
-  return { devices, connected, error: error || connectionError, pending, confirmation, history, send, stopAll };
+  return { devices, connected, error: error || connectionError, pending, confirmation, history, componentErrors, send, stopAll };
 }

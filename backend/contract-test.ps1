@@ -9,8 +9,8 @@ function Keys($Value, [string[]]$Names) {
 }
 try {
     $devices = Invoke-RestMethod "$BaseUrl/api/devices"
-    Assert (($devices.id -join ',') -eq 'front-lights,side-lights,main-motor,main-light-bank') 'Catálogo incorrecto.'
-    foreach ($device in ($devices | Where-Object type -ne 'light_bank')) { Keys $device @('id', 'name', 'type', 'state', 'online', 'direction', 'speed') }
+    Assert (($devices.id -join ',') -eq 'front-lights,side-lights,main-motor,main-light-bank,hydraulic-1,servo-1') 'Catálogo incorrecto.'
+    foreach ($device in ($devices | Where-Object { $_.type -in @('light','motor') })) { Keys $device @('id', 'name', 'type', 'state', 'online', 'direction', 'speed') }
     foreach ($speed in @(0, 100)) {
         $response = Post 'main-motor' @{ action = 'start'; speed = $speed; direction = 'reverse' }
         Assert ($response.StatusCode -eq 200) 'Límite de velocidad rechazado.'
