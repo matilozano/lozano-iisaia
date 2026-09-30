@@ -9,8 +9,8 @@ function Keys($Value, [string[]]$Names) {
 }
 try {
     $devices = Invoke-RestMethod "$BaseUrl/api/devices"
-    Assert (($devices.id -join ',') -eq 'front-lights,side-lights,main-motor') 'Catálogo incorrecto.'
-    foreach ($device in $devices) { Keys $device @('id', 'name', 'type', 'state', 'online', 'direction', 'speed') }
+    Assert (($devices.id -join ',') -eq 'front-lights,side-lights,main-motor,main-light-bank') 'Catálogo incorrecto.'
+    foreach ($device in ($devices | Where-Object type -ne 'light_bank')) { Keys $device @('id', 'name', 'type', 'state', 'online', 'direction', 'speed') }
     foreach ($speed in @(0, 100)) {
         $response = Post 'main-motor' @{ action = 'start'; speed = $speed; direction = 'reverse' }
         Assert ($response.StatusCode -eq 200) 'Límite de velocidad rechazado.'
@@ -43,11 +43,11 @@ try {
     }
     Assert ((Post 'missing' @{ action = 'on' }).StatusCode -eq 404) 'Componente inexistente debe devolver 404.'
     Assert ((Invoke-WebRequest "$BaseUrl/api/devices/missing" -SkipHttpErrorCheck).StatusCode -eq 404) 'Consulta inexistente debe devolver 404.'
-    foreach ($path in @('swagger', 'api/sequences')) {
+    foreach ($path in @('api/sequences')) {
         Assert ((Invoke-WebRequest "$BaseUrl/$path" -SkipHttpErrorCheck).StatusCode -eq 404) "Endpoint fuera de alcance presente: $path."
     }
     $stop = Invoke-WebRequest "$BaseUrl/api/devices/stop-all" -Method Post
     Assert ($stop.StatusCode -eq 204 -and $stop.Content.Length -eq 0) 'STOP ALL debe devolver 204 sin cuerpo.'
-    Write-Output 'OK: contrato JSON, límites 0/100, defaults, errores 400/404 sin mutación, STOP ALL y ausencia de Swagger/secuencias.'
+    Write-Output 'OK: contrato JSON, límites 0/100, defaults, errores 400/404 sin mutación, STOP ALL y ausencia de secuencias.'
 }
 finally { Invoke-RestMethod "$BaseUrl/api/devices/stop-all" -Method Post | Out-Null }

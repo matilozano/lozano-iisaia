@@ -6,7 +6,7 @@ function Command($Id, $Body) {
 }
 try {
     $devices = Invoke-RestMethod "$BaseUrl/api/devices"
-    Assert ($devices.Count -eq 3) 'Se esperaban tres componentes.'
+    Assert ($devices.Count -eq 4) 'Se esperaban cuatro componentes.'
     foreach ($id in @('front-lights', 'side-lights')) {
         foreach ($action in @('on', 'off')) {
             $result = Command $id @{ action = $action }
@@ -24,10 +24,13 @@ try {
     Command 'front-lights' @{ action = 'on' } | Out-Null
     Command 'side-lights' @{ action = 'on' } | Out-Null
     Command 'main-motor' @{ action = 'start'; speed = 70 } | Out-Null
+    Command 'main-light-bank' @{ action = 'BLINK' } | Out-Null
     $stop = Invoke-WebRequest "$BaseUrl/api/devices/stop-all" -Method Post
     Assert ($stop.StatusCode -eq 204) 'STOP ALL no confirmó la parada.'
     $devices = Invoke-RestMethod "$BaseUrl/api/devices"
     Assert (@($devices | Where-Object { $_.state -notin @('off', 'stopped') -or $_.speed -ne 0 }).Count -eq 0) 'Parada general incompleta.'
-    Write-Output 'OK: tres componentes, ambas luces ON/OFF, motor adelante/reversa a 70%, stop, consulta y STOP ALL.'
+    $bank = $devices | Where-Object id -eq 'main-light-bank'
+    Assert ($bank.effect -eq 'NONE' -and @($bank.channels | Where-Object { $_ }).Count -eq 0) 'Banco no apagado.'
+    Write-Output 'OK: cuatro componentes, ambas luces ON/OFF, motor adelante/reversa a 70%, stop, consulta y STOP ALL.'
 }
 finally { Invoke-RestMethod "$BaseUrl/api/devices/stop-all" -Method Post | Out-Null }

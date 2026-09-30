@@ -8,6 +8,14 @@ public static class CommandValidator
     {
         switch (component.Type)
         {
+            case "light_bank":
+                if (command.Action is not ("ALL_ON" or "ALL_OFF" or "SWEEP_RIGHT" or "SWEEP_LEFT" or "PING_PONG" or "BLINK" or "STOP_EFFECT" or "SET_SPEED"))
+                    throw new ArgumentException("Comando no soportado por el banco de iluminación.");
+                if (command.Direction is not null)
+                    throw new ArgumentException("El banco no admite direction; utilice SWEEP_RIGHT o SWEEP_LEFT.");
+                if (command.Action == "SET_SPEED" ? command.Speed is null or < 1 or > 100 : command.Speed is not null)
+                    throw new ArgumentException("Solo SET_SPEED admite speed, obligatorio entre 1 y 100.");
+                break;
             case "light":
                 if (command.Action is not ("on" or "off") || command.Direction is not null || command.Speed is not null)
                     throw new ArgumentException("Las luces admiten on/off, sin dirección ni velocidad.");

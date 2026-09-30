@@ -40,3 +40,4 @@ await service.StopAllAsync(new CancellationToken(true));
 foreach (var item in await service.GetComponentsAsync(default))
     Check(item.State.State is "off" or "stopped" && item.State.Speed == 0, "Parada general");
 Console.WriteLine($"OK: {checks} verificaciones del simulador y servicio; 60 operaciones concurrentes y parada final.");
+await LightBankTests.Run();

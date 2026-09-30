@@ -1,6 +1,6 @@
 # Plan de implementación
 
-## Estado actual — Iteración 1
+## Base funcional — Iteración 1
 
 Primera versión funcional del simulador, sin hardware físico:
 
@@ -27,7 +27,7 @@ El catálogo y las reglas de validación están en Domain. Application coordina 
 
 ## Iteraciones posteriores — pendientes
 
-El README describe el objetivo completo del proyecto, no funcionalidades incluidas en esta primera entrega. Swagger, banco de iluminación, secuencias, simulación de fallas, ESP32, firmware, GPIO, hidráulicos, servos, autenticación y base de datos no forman parte de esta implementación.
+El README describe el objetivo completo del proyecto, no funcionalidades incluidas en esta primera entrega. Swagger y banco de iluminación se incorporan en Iteración 3. Secuencias, simulación de fallas, ESP32, firmware, GPIO, hidráulicos, servos, autenticación y base de datos continúan pendientes.
 
 La documentación anterior marcaba como implementadas funciones de iteraciones posteriores cuyos archivos ya no existían al comenzar esta tarea. Este plan refleja el alcance de Iteración 1 solicitado para el repositorio actual.
 
@@ -36,3 +36,7 @@ No se realizan commits de Git en esta tarea.
 ## Iteración 2 — Arquitectura
 
 Refactor acotado a la estructura del Harness: Domain/Components, Domain/Commands, Contracts/DTOs e Infrastructure/Gateways, con mapeo de transporte en Controllers. Se conserva el flujo existente mediante IComponentService e IComponentGateway, todos los contratos HTTP y el frontend de la Iteración 1. Sin nuevos componentes ni funcionalidades. Trabajo y verificaciones registrados en ITERACION-2.md.
+
+## Iteración 3 — Simulador visual y Swagger
+
+Swagger/OpenAPI en Development; banco lógico de ocho canales con efectos temporizados en SimulatorComponentGateway; panel visual con estados confirmados, control directo, sección de sistema e historial de sesión. Se conserva la arquitectura y el contrato de los componentes anteriores. Ver ITERACION-3.md para archivos, decisiones y verificación, y DESARROLLO.md para ejecución y contrato actualizado.

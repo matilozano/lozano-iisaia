@@ -171,3 +171,9 @@ Esp32Gateway
 
 Fase 6:
 selección por configuración
+
+## Extensión de Iteración 3
+
+El banco light_bank sigue Controller → ComponentService → IComponentGateway → SimulatorComponentGateway. SimulatedLightBank encapsula sus patrones y reloj monotónico dentro de Infrastructure; toda lectura/escritura se serializa con el lock existente del gateway. Las lecturas calculan la fase según tiempo transcurrido, sin tareas de fondo ni temporización del navegador. STOP ALL cancela los efectos bajo el mismo lock.
+
+Swagger se configura en Composition Root y se publica mediante middleware solo en Development; las operaciones siguen en Controllers. Los DTOs agregan campos opcionales del banco, omitidos en componentes existentes. El frontend muestra las instantáneas recibidas y mantiene únicamente el historial de sesión y valores de controles todavía no enviados.

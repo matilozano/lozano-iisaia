@@ -175,3 +175,6 @@ Debe:
 
 La respuesta debe contener suficiente información para que el frontend pueda
 actualizar los estados confirmados.
+## Contrato implementado del banco (Iteración 3)
+
+El identificador es main-light-bank y su type HTTP es light_bank, siguiendo la convención en minúsculas de los componentes existentes. Las capabilities enumeradas arriba se envían como action en mayúsculas. SET_SPEED recibe speed de 1 a 100. STOP_EFFECT conserva el patrón; ALL_OFF y STOP ALL apagan todos los canales. Canales, efecto y velocidad se consultan por API; ver DESARROLLO.md para campos y semántica temporal.

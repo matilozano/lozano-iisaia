@@ -1,13 +1,16 @@
 export interface Device {
   id: string;
   name: string;
-  type: 'light' | 'motor';
+  type: 'light' | 'motor' | 'light_bank';
   state: 'on' | 'off' | 'running' | 'stopped';
   online: boolean;
   direction: 'forward' | 'reverse' | null;
   speed: number;
+  channels?: boolean[];
+  effect?: string;
+  effectSpeed?: number;
 }
-export interface Command { action: 'on' | 'off' | 'start' | 'stop'; direction?: 'forward' | 'reverse'; speed?: number }
+export interface Command { action: 'on' | 'off' | 'start' | 'stop' | 'ALL_ON' | 'ALL_OFF' | 'SWEEP_RIGHT' | 'SWEEP_LEFT' | 'PING_PONG' | 'BLINK' | 'STOP_EFFECT' | 'SET_SPEED'; direction?: 'forward' | 'reverse'; speed?: number }
 export interface CommandResult { deviceId: string; success: boolean; state: Omit<Device, 'type' | 'name'>; executedAt: string }
 
 export async function request<T>(path: string, command?: unknown): Promise<T> {

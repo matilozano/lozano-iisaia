@@ -6,7 +6,8 @@ public sealed class ComponentCatalog
     {
         new Component("front-lights", "Luces frontales", "light"),
         new Component("side-lights", "Luces laterales", "light"),
-        new Component("main-motor", "Motor principal", "motor")
+        new Component("main-motor", "Motor principal", "motor"),
+        new Component("main-light-bank", "Banco de iluminación", "light_bank")
     });
 
     public Component? Find(string id) => Components.FirstOrDefault(component => component.Id == id);

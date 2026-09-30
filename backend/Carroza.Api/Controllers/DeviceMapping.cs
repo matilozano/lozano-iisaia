@@ -12,10 +12,10 @@ internal static class DeviceMapping
 
     public static DeviceDto ToDto(this ComponentSnapshot item) =>
         new(item.Component.Id, item.Component.Name, item.Component.Type,
-            item.State.State, item.State.Online, item.State.Direction, item.State.Speed);
+            item.State.State, item.State.Online, item.State.Direction, item.State.Speed, item.State.Channels, item.State.Effect, item.State.EffectSpeed);
 
     public static DeviceStateDto ToDto(this ComponentState state) =>
-        new(state.Id, state.State, state.Online, state.Direction, state.Speed);
+        new(state.Id, state.State, state.Online, state.Direction, state.Speed, state.Channels, state.Effect, state.EffectSpeed);
 
     public static DeviceResultDto ToDto(this ComponentResult result) =>
         new(result.ComponentId, result.Success, result.State.ToDto(), result.ExecutedAt);

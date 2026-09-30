@@ -7,13 +7,16 @@ namespace Carroza.Api.Infrastructure.Gateways;
 public sealed class SimulatorComponentGateway(ComponentCatalog catalog, TimeProvider clock) : IComponentGateway
 {
     private readonly object gate = new();
+    private readonly Dictionary<string, SimulatedLightBank> banks = catalog.Components
+        .Where(component => component.Type == "light_bank")
+        .ToDictionary(component => component.Id, _ => new SimulatedLightBank(clock));
     private readonly Dictionary<string, ComponentState> states = catalog.Components.ToDictionary(
         component => component.Id, component => new ComponentState(component.Id, RestingState(component.Type), true));
 
     public Task<ComponentState> GetStateAsync(string id, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        lock (gate) return Task.FromResult(states[id]);
+        lock (gate) return Task.FromResult(banks.TryGetValue(id, out var bank) ? bank.Read(id) : states[id]);
     }
 
     public Task<ComponentResult> ExecuteAsync(string id, ComponentCommand command, CancellationToken cancellationToken)
@@ -21,6 +24,8 @@ public sealed class SimulatorComponentGateway(ComponentCatalog catalog, TimeProv
         cancellationToken.ThrowIfCancellationRequested();
         lock (gate)
         {
+            if (banks.TryGetValue(id, out var bank))
+                return Task.FromResult(new ComponentResult(id, true, bank.Execute(id, command), clock.GetUtcNow()));
             var current = states[id];
             var next = command.Action switch
             {
@@ -37,14 +42,17 @@ public sealed class SimulatorComponentGateway(ComponentCatalog catalog, TimeProv
     public Task StopAllAsync(CancellationToken cancellationToken)
     {
         lock (gate)
+        {
+            foreach (var bank in banks.Values) bank.StopAll();
             foreach (var component in catalog.Components)
                 states[component.Id] = states[component.Id] with { State = RestingState(component.Type), Speed = 0 };
+        }
         return Task.CompletedTask;
     }
 
     private static string RestingState(string type) => type switch
     {
-        "light" => "off",
+        "light" or "light_bank" => "off",
         "motor" => "stopped",
         _ => throw new NotSupportedException($"Tipo no simulado: {type}.")
     };
