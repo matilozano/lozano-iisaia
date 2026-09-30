@@ -1,0 +1,177 @@
+# Componentes
+
+## Modelo
+
+Un componente representa un dispositivo lógico controlable.
+
+Propiedades mínimas:
+
+- id;
+- name;
+- type;
+- status;
+- capabilities;
+- online.
+
+## LIGHT
+
+Ejemplo:
+
+ID:
+`front-lights`
+
+Capabilities:
+
+- ON
+- OFF
+
+Estados:
+
+- ON
+- OFF
+
+## LIGHT BANK
+
+Ejemplo:
+
+ID:
+`main-light-bank`
+
+Representa múltiples canales de iluminación.
+
+Cantidad inicial:
+
+8 canales.
+
+Capabilities:
+
+- ALL_ON
+- ALL_OFF
+- SWEEP_RIGHT
+- SWEEP_LEFT
+- PING_PONG
+- BLINK
+- STOP_EFFECT
+- SET_SPEED
+
+El barrido debe poder variar su velocidad.
+
+## MOTOR
+
+Ejemplo:
+
+ID:
+`main-motor`
+
+Capabilities:
+
+- FORWARD
+- REVERSE
+- STOP
+- SET_SPEED
+
+Propiedades:
+
+- running;
+- direction;
+- speed.
+
+Speed:
+
+0..100
+
+Direction:
+
+- FORWARD
+- REVERSE
+
+STOP debe detener el movimiento.
+
+## HYDRAULIC_ACTUATOR
+
+Ejemplo:
+
+ID:
+`hydraulic-1`
+
+Capabilities:
+
+- EXTEND
+- RETRACT
+- STOP
+
+Propiedades:
+
+- position;
+- movement;
+- limitExtended;
+- limitRetracted.
+
+Position:
+
+0..100
+
+Movement:
+
+- STOPPED
+- EXTENDING
+- RETRACTING
+
+El simulador debe cambiar gradualmente la posición mientras el componente se
+encuentra en movimiento.
+
+## SERVO
+
+Ejemplo:
+
+ID:
+`servo-1`
+
+Capabilities:
+
+- SET_POSITION
+
+Propiedades:
+
+- position.
+
+Rango:
+
+0..180 grados.
+
+## Estado online
+
+Todo componente puede reportar:
+
+- online;
+- offline.
+
+Un componente offline no debe confirmar comandos como ejecutados.
+
+## Errores simulables
+
+El SimulatorComponentGateway debe evolucionar para poder representar:
+
+- DEVICE_OFFLINE;
+- INVALID_COMMAND;
+- TIMEOUT;
+- INVALID_PARAMETER;
+- INTERNAL_ERROR.
+
+Estos errores permiten verificar el comportamiento de la aplicación sin
+provocar fallas físicas.
+
+## STOP ALL
+
+STOP ALL afecta a todos los componentes relevantes.
+
+Debe:
+
+- apagar iluminación;
+- cancelar efectos;
+- detener motores;
+- detener actuadores;
+- cancelar secuencias.
+
+La respuesta debe contener suficiente información para que el frontend pueda
+actualizar los estados confirmados.
