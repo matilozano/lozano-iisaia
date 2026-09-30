@@ -1,6 +1,7 @@
 using Carroza.Api.Application.Services;
-using Carroza.Api.Domain;
-using Carroza.Api.Infrastructure;
+using Carroza.Api.Domain.Components;
+using Carroza.Api.Domain.Commands;
+using Carroza.Api.Infrastructure.Gateways;
 
 var catalog = new ComponentCatalog();
 var gateway = new SimulatorComponentGateway(catalog, TimeProvider.System);

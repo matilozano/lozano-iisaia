@@ -1,4 +1,6 @@
-namespace Carroza.Api.Domain;
+using Carroza.Api.Domain.Components;
+
+namespace Carroza.Api.Domain.Commands;
 
 public static class CommandValidator
 {

@@ -1,6 +1,5 @@
 using Carroza.Api.Application.Services;
-using Carroza.Api.Contracts;
-using Carroza.Api.Domain;
+using Carroza.Api.Contracts.DTOs;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Carroza.Api.Controllers;
@@ -13,15 +12,14 @@ public sealed class DevicesController(IComponentService service) : ControllerBas
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
         var devices = await service.GetComponentsAsync(cancellationToken);
-        return Ok(devices.Select(item => new DeviceDto(item.Component.Id, item.Component.Name, item.Component.Type,
-            item.State.State, item.State.Online, item.State.Direction, item.State.Speed)));
+        return Ok(devices.Select(item => item.ToDto()));
     }
 
     [HttpGet("{id}")]
     public async Task<IActionResult> GetState(string id, CancellationToken cancellationToken)
     {
         var state = await service.GetStateAsync(id, cancellationToken);
-        return state is null ? NotFound() : Ok(DeviceStateDto.From(state));
+        return state is null ? NotFound() : Ok(state.ToDto());
     }
 
     [HttpPost("{id}/commands")]
@@ -29,8 +27,8 @@ public sealed class DevicesController(IComponentService service) : ControllerBas
     {
         try
         {
-            var result = await service.ExecuteAsync(id, new ComponentCommand(request.Action, request.Direction, request.Speed), cancellationToken);
-            return result is null ? NotFound() : Ok(new DeviceResultDto(result.ComponentId, result.Success, DeviceStateDto.From(result.State), result.ExecutedAt));
+            var result = await service.ExecuteAsync(id, request.ToCommand(), cancellationToken);
+            return result is null ? NotFound() : Ok(result.ToDto());
         }
         catch (ArgumentException error) { return BadRequest(new CommandErrorDto(400, "INVALID_COMMAND", error.Message)); }
     }

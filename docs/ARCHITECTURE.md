@@ -137,13 +137,20 @@ Presentación
 El navegador puede cerrarse sin que la temporización dependa de JavaScript del
 cliente.
 
-### Implementación de la iteración 3
+### Alcance actual — Iteración 2
 
-`SequencesController` depende de `ISequenceService`. `SequenceService` consulta el catálogo de Domain y ejecuta los pasos mediante `IComponentGateway`, pasando por `OperationCoordinator`. Los comandos manuales de `ComponentService` pasan por el mismo coordinador.
+Las secuencias descriptas arriba son una evolución futura, no una funcionalidad implementada. La Iteración 2 conserva exclusivamente las luces frontales, laterales, motor y parada global de la Iteración 1.
 
-El coordinador mantiene una exclusión de escrituras y una versión de admisión. STOP ALL cambia esa versión antes de esperar al gateway: los pasos y comandos que estaban en cola quedan invalidados. La cancelación interrumpe las esperas entre pasos. La confirmación de parada solo se envía después de que el gateway confirmó STOP ALL. Las consultas de estado siguen disponibles durante una secuencia.
+La implementación actual sigue estas responsabilidades:
 
-El servicio de secuencias y el coordinador son singleton por el estado compartido entre solicitudes. `SequenceLifetime`, en Infrastructure, solicita cancelación y parada al apagar el host. El frontend consulta el estado; nunca administra los tiempos de ejecución.
+- `Controllers/DevicesController`: frontera HTTP; depende de `IComponentService`. `DeviceMapping` convierte requests y resultados sin ejecutar reglas de componentes.
+- `Contracts/DTOs`: datos del contrato HTTP, sin dependencias del dominio ni del simulador.
+- `Application/Services/ComponentService`: consulta catálogo, valida comandos mediante Domain y coordina `IComponentGateway`.
+- `Domain/Components`: catálogo, componente y estado. `Domain/Commands`: comando, resultado y validación, sin dependencias HTTP ni de infraestructura.
+- `Infrastructure/Gateways/SimulatorComponentGateway`: estado virtual compartido, transiciones y exclusión mutua para comandos y STOP ALL.
+- `Program.cs`: configuración, registro de dependencias y Controllers. El gateway es singleton y el servicio scoped. `ComponentGateway:Mode` selecciona Simulator; el gateway ESP32 todavía no está implementado.
+
+Se conserva `/api/devices` por compatibilidad. STOP ALL conserva su ejecución aunque se desconecte el cliente; comandos posteriores pueden volver a activar componentes. No se incorporan coordinadores de secuencias ni bloqueos nuevos.
 
 ## Evolución
 

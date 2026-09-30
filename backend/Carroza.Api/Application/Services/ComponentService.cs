@@ -1,4 +1,5 @@
-using Carroza.Api.Domain;
+using Carroza.Api.Domain.Components;
+using Carroza.Api.Domain.Commands;
 
 namespace Carroza.Api.Application.Services;
 

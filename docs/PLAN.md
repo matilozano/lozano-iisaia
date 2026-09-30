@@ -32,3 +32,7 @@ El README describe el objetivo completo del proyecto, no funcionalidades incluid
 La documentación anterior marcaba como implementadas funciones de iteraciones posteriores cuyos archivos ya no existían al comenzar esta tarea. Este plan refleja el alcance de Iteración 1 solicitado para el repositorio actual.
 
 No se realizan commits de Git en esta tarea.
+
+## Iteración 2 — Arquitectura
+
+Refactor acotado a la estructura del Harness: Domain/Components, Domain/Commands, Contracts/DTOs e Infrastructure/Gateways, con mapeo de transporte en Controllers. Se conserva el flujo existente mediante IComponentService e IComponentGateway, todos los contratos HTTP y el frontend de la Iteración 1. Sin nuevos componentes ni funcionalidades. Trabajo y verificaciones registrados en ITERACION-2.md.

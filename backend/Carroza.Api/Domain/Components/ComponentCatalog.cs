@@ -1,4 +1,4 @@
-namespace Carroza.Api.Domain;
+namespace Carroza.Api.Domain.Components;
 
 public sealed class ComponentCatalog
 {

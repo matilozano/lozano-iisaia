@@ -1,7 +1,8 @@
 using Carroza.Api.Application;
-using Carroza.Api.Domain;
+using Carroza.Api.Domain.Components;
+using Carroza.Api.Domain.Commands;
 
-namespace Carroza.Api.Infrastructure;
+namespace Carroza.Api.Infrastructure.Gateways;
 
 public sealed class SimulatorComponentGateway(ComponentCatalog catalog, TimeProvider clock) : IComponentGateway
 {
