@@ -33,6 +33,7 @@ public sealed class DevicesController(IComponentService service) : ControllerBas
     [HttpPost("{id}/commands")]
     [ProducesResponseType(typeof(DeviceResultDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(CommandErrorDto), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(CommandErrorDto), StatusCodes.Status409Conflict)]
     [ProducesResponseType(typeof(CommandErrorDto), StatusCodes.Status503ServiceUnavailable)]
     [ProducesResponseType(typeof(CommandErrorDto), StatusCodes.Status504GatewayTimeout)]
     [ProducesResponseType(typeof(CommandErrorDto), StatusCodes.Status500InternalServerError)]
@@ -46,7 +47,7 @@ public sealed class DevicesController(IComponentService service) : ControllerBas
         }
         catch (ComponentOperationException error)
         {
-            var status = error.Code switch { "DEVICE_OFFLINE" => 503, "TIMEOUT" => 504, "INTERNAL_ERROR" => 500, _ => 400 };
+            var status = error.Code switch { "OPERATION_CONFLICT" => 409, "DEVICE_OFFLINE" => 503, "TIMEOUT" => 504, "INTERNAL_ERROR" => 500, _ => 400 };
             return StatusCode(status, new CommandErrorDto(status, error.Code, error.Message));
         }
         catch (ArgumentException error) { return BadRequest(new CommandErrorDto(400, "INVALID_COMMAND", error.Message)); }

@@ -18,7 +18,12 @@ builder.Services.AddSingleton<ComponentCatalog>();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton(new SimulatorFaultPlan(
     builder.Configuration.GetSection("Simulator:Faults").Get<Dictionary<string, string>>()));
-builder.Services.AddScoped<IComponentService, ComponentService>();
+builder.Services.AddSingleton<OperationCoordinator>();
+builder.Services.AddSingleton<ComponentCommandExecutor>();
+builder.Services.AddSingleton<IComponentService, ComponentService>();
+builder.Services.AddSingleton<Carroza.Api.Domain.Sequences.SequenceCatalog>();
+builder.Services.AddSingleton<ISequenceService, SequenceService>();
+builder.Services.AddHostedService<Carroza.Api.Infrastructure.Lifecycle.SequenceLifetime>();
 var mode = builder.Configuration["ComponentGateway:Mode"] ?? "Simulator";
 switch (mode)
 {

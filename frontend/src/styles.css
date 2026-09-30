@@ -64,3 +64,4 @@ th { color: #a3b6be; }
 .devices { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 @media(max-width:950px) { .devices { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media(max-width:550px) { .devices { grid-template-columns: 1fr; } }
+progress { width: 100%; height: 14px; accent-color: #8bdec0; }

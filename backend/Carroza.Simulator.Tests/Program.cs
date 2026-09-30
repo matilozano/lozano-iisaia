@@ -34,7 +34,11 @@ Check(await service.ExecuteAsync("missing", new("on"), default) is null, "Comand
 await Task.WhenAll(Enumerable.Range(0, 60).Select(i => Task.Run(async () =>
 {
     if (i % 3 == 0) await service.StopAllAsync(default);
-    else await service.ExecuteAsync("front-lights", new(i % 2 == 0 ? "on" : "off"), default);
+    else
+    {
+        try { await service.ExecuteAsync("front-lights", new(i % 2 == 0 ? "on" : "off"), default); }
+        catch (ComponentOperationException error) when (error.Code == "OPERATION_CONFLICT") { /* STOP invalidated this queued request. */ }
+    }
 })));
 await service.StopAllAsync(new CancellationToken(true));
 foreach (var item in await service.GetComponentsAsync(default))
@@ -42,3 +46,4 @@ foreach (var item in await service.GetComponentsAsync(default))
 Console.WriteLine($"OK: {checks} verificaciones del simulador y servicio; 60 operaciones concurrentes y parada final.");
 await LightBankTests.Run();
 await PositionAndFaultTests.Run();
+await SequenceTests.Run();

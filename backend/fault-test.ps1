@@ -39,6 +39,15 @@ try {
     $snapshot = Invoke-RestMethod "$baseUrl/api/devices/stop-all?includeState=true" -Method Post
     Assert (($snapshot | Where-Object id -eq 'hydraulic-1').movement -eq 'STOPPED') 'STOP ALL no detuvo el actuador.'
     Assert (($snapshot | Where-Object id -eq 'front-lights').online -eq $false) 'STOP ALL borró condición offline.'
+    $run = Invoke-RestMethod "$baseUrl/api/sequences/SHOW_FNE/start" -Method Post
+    for ($attempt=0; $attempt -lt 40; $attempt++) {
+        $execution = Invoke-RestMethod "$baseUrl/api/sequences/execution"
+        if ($execution.status -ne 'RUNNING') { break }
+        Start-Sleep -Milliseconds 100
+    }
+    Assert ($execution.status -eq 'FAILED' -and $execution.error -match 'DEVICE_OFFLINE') 'Secuencia con falla no terminó FAILED.'
+    $events = @((Invoke-RestMethod "$baseUrl/api/sequences/events") | Where-Object runId -eq $run.runId)
+    Assert ($events.Count -eq 1 -and $events[0].result -eq 'DEVICE_OFFLINE') 'Ejecutó pasos después de la falla.'
     Write-Output 'OK: cinco fallas HTTP reproducibles, estados sin mutación, offline, operación independiente y STOP ALL.'
 }
 finally { if ($process -and -not $process.HasExited) { Stop-Process -Id $process.Id; $process.WaitForExit() } }

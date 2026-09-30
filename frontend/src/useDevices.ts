@@ -1,7 +1,8 @@
+import type { SequenceExecution, SequenceEvent } from './Sequences';
 import { useEffect, useRef, useState } from 'react';
 import { ApiError, request, type Command, type CommandResult, type Device } from './api';
 
-export interface HistoryEntry { time: string; component: string; command: string; result: string }
+export interface HistoryEntry { origin: 'MANUAL' | 'SEQUENCE'; timestamp: number; time: string; component: string; command: string; result: string }
 
 export function useDevices() {
   const [devices, setDevices] = useState<Device[]>([]);
@@ -13,9 +14,35 @@ export function useDevices() {
   const [confirmation, setConfirmation] = useState('');
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   function record(component: string, command: string, result: string) {
-    setHistory(items => [{ time: new Date().toLocaleTimeString(), component, command, result }, ...items].slice(0, 100));
+    setHistory(items => [{ origin: 'MANUAL' as const, timestamp: Date.now(), time: new Date().toLocaleTimeString(), component, command, result }, ...items].slice(0, 100));
   }
-  const generation = useRef(0);
+  const [execution, setExecution] = useState<SequenceExecution | null>(null);
+  const [sequencePending, setSequencePending] = useState(false);
+  const [sequenceError, setSequenceError] = useState('');
+  const seenEvents = useRef(new Set<string>());
+  const sessionStarted = useRef(Date.now());
+  function applySequence(current: SequenceExecution, events: SequenceEvent[]) {
+    setExecution(current);
+    const fresh = events.filter(event => {
+      const key = `${event.runId}/${event.id}`;
+      if (seenEvents.current.has(key) || Date.parse(event.time) < sessionStarted.current) return false;
+      seenEvents.current.add(key); return true;
+    }).map(event => ({ origin: 'SEQUENCE' as const, timestamp: Date.parse(event.time), time: new Date(event.time).toLocaleTimeString(), component: event.componentId,
+      command: [event.command.action, event.command.direction, event.command.speed === null || event.command.speed === undefined ? '' : event.command.speed + '%', event.command.position === null || event.command.position === undefined ? '' : event.command.position + '°'].filter(Boolean).join(' '), result: event.result }));
+    if (fresh.length) setHistory(items => [...items, ...fresh].sort((a,b) => b.timestamp - a.timestamp).slice(0,100));
+  }
+  async function sequenceAction(action: 'SHOW_FNE/start' | 'cancel') {
+    if (busy.current || stopping.current) return;
+    busy.current = true; const version = ++generation.current;
+    setSequencePending(true); setSequenceError('');
+    try {
+      const result = await request<SequenceExecution>(`sequences/${action}`, {});
+      if (version === generation.current) setExecution(result);
+      record(result.sequenceId ?? 'SEQUENCES', action, 'OK');
+    }
+    catch (error) { setSequenceError(error instanceof Error ? error.message : String(error)); record('SEQUENCES', action, 'ERROR'); }
+    finally { busy.current = false; setSequencePending(false); }
+  }  const generation = useRef(0);
   const busy = useRef(false);
   const stopping = useRef(false);
 
@@ -26,8 +53,8 @@ export function useDevices() {
       if (!busy.current && !stopping.current) {
         const version = generation.current;
         try {
-          const states = await request<Device[]>('devices');
-          if (!disposed && version === generation.current) { setDevices(states); setConnected(true); setConnectionError(''); }
+          const [states, current, events] = await Promise.all([request<Device[]>('devices'), request<SequenceExecution>('sequences/execution'), request<SequenceEvent[]>('sequences/events')]);
+          if (!disposed && version === generation.current) { setDevices(states); applySequence(current, events); setConnected(true); setConnectionError(''); }
         } catch (e) {
           if (!disposed && version === generation.current) { setConnected(false); setConnectionError(e instanceof Error ? e.message : String(e)); }
         }
@@ -39,7 +66,7 @@ export function useDevices() {
   }, []);
 
   async function send(device: Device, command: Command) {
-    if (busy.current || stopping.current) return;
+    if (busy.current || stopping.current || execution?.status === 'RUNNING') return;
     busy.current = true;
     const version = ++generation.current;
     setPending(`Enviando comando a ${device.name}…`); setError('');
@@ -77,5 +104,5 @@ export function useDevices() {
     } catch (e) { record('TODOS', 'STOP ALL', 'ERROR'); setError(e instanceof Error ? e.message : String(e)); }
     finally { stopping.current = false; setPending(''); }
   }
-  return { devices, connected, error: error || connectionError, pending, confirmation, history, componentErrors, send, stopAll };
+  return { execution, sequencePending, sequenceError, startSequence: () => sequenceAction('SHOW_FNE/start'), cancelSequence: () => sequenceAction('cancel'), devices, connected, error: error || connectionError, pending, confirmation, history, componentErrors, send, stopAll };
 }

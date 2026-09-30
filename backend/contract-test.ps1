@@ -43,11 +43,9 @@ try {
     }
     Assert ((Post 'missing' @{ action = 'on' }).StatusCode -eq 404) 'Componente inexistente debe devolver 404.'
     Assert ((Invoke-WebRequest "$BaseUrl/api/devices/missing" -SkipHttpErrorCheck).StatusCode -eq 404) 'Consulta inexistente debe devolver 404.'
-    foreach ($path in @('api/sequences')) {
-        Assert ((Invoke-WebRequest "$BaseUrl/$path" -SkipHttpErrorCheck).StatusCode -eq 404) "Endpoint fuera de alcance presente: $path."
-    }
+    Assert ((Invoke-RestMethod "$BaseUrl/api/sequences").id -contains 'SHOW_FNE') 'Falta SHOW_FNE.'
     $stop = Invoke-WebRequest "$BaseUrl/api/devices/stop-all" -Method Post
     Assert ($stop.StatusCode -eq 204 -and $stop.Content.Length -eq 0) 'STOP ALL debe devolver 204 sin cuerpo.'
-    Write-Output 'OK: contrato JSON, límites 0/100, defaults, errores 400/404 sin mutación, STOP ALL y ausencia de secuencias.'
+    Write-Output 'OK: contrato JSON, límites 0/100, defaults, errores 400/404 sin mutación, STOP ALL y catálogo de secuencias.'
 }
 finally { Invoke-RestMethod "$BaseUrl/api/devices/stop-all" -Method Post | Out-Null }
