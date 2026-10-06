@@ -10,7 +10,7 @@ builder.Services.AddSwaggerGen(options =>
     options.SwaggerDoc("v1", new Microsoft.OpenApi.OpenApiInfo
     {
         Title = "Control de carroza", Version = "v1",
-        Description = "API de componentes simulados. Consulte estados y pruebe comandos. STOP ALL apaga iluminación y detiene el motor."
+        Description = "API de componentes simulados y secuencias coordinadas. Consulte estados y pruebe comandos o SHOW_FNE. STOP ALL cancela secuencias, apaga iluminación y detiene motor y actuador; conserva el ángulo del servo."
     });
     options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, "Carroza.Api.xml"));
 });

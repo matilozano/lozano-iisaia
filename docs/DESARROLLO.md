@@ -1,4 +1,4 @@
-# Desarrollo local — Iteración 4
+# Desarrollo local — Iteración 6
 
 Requisitos: SDK .NET 9, Node.js 22 con npm y PowerShell 7 para los scripts de prueba.
 
@@ -19,9 +19,9 @@ npm --prefix frontend run dev
 
 Frontend: http://127.0.0.1:5173
 
-API: http://localhost:5080/api/devices
+API: http://127.0.0.1:5080/api/devices
 
-Mantener libres los puertos 5080 y 5173. El proxy de Vite conecta el navegador con la API. En Development, Swagger UI está en http://localhost:5080/swagger y OpenAPI en /swagger/v1/swagger.json. No hay endpoints de secuencias.
+Mantener libres los puertos 5080 y 5173. El proxy de Vite conecta `/api` con la API en 5080. En Development, Swagger UI está en http://127.0.0.1:5080/swagger y OpenAPI en /swagger/v1/swagger.json. Iniciar Vite con el comando indicado para cargar frontend/vite.config.ts; un servidor estático sin proxy no sirve la API.
 
 ## Compilación
 
@@ -40,6 +40,8 @@ Con la API iniciada:
 ./backend/iteration-3-test.ps1
 ./backend/iteration-4-test.ps1
 ./backend/fault-test.ps1
+./backend/sequence-test.ps1
+./backend/frontend-proxy-test.ps1
 ```
 
 Suite del servicio y simulador, independiente del servidor HTTP:
@@ -48,7 +50,7 @@ Suite del servicio y simulador, independiente del servidor HTTP:
 dotnet run --project backend/Carroza.Simulator.Tests
 ```
 
-La suite .NET es un ejecutable de comprobaciones sin frameworks externos; se ejecuta con `dotnet run`, no con `dotnet test`. Los scripts HTTP comprueban catálogo, ambos sectores de luces, motor, dirección, límites 0/100, validaciones 400, componentes inexistentes 404, contrato JSON y parada general 204. Terminan con todos los componentes apagados/detenidos. La prueba iteration-3-test comprueba Swagger UI, sus assets, cuatro operaciones OpenAPI y cinco DTOs, además de comandos y evolución temporal del banco. Las secuencias siguen devolviendo 404.
+La suite .NET es un ejecutable de comprobaciones sin frameworks externos; se ejecuta con `dotnet run`, no con `dotnet test`. Los scripts HTTP comprueban catálogo, ambos sectores de luces, motor, dirección, límites 0/100, validaciones 400, componentes inexistentes 404, contrato JSON y parada general 204. Terminan con todos los componentes apagados/detenidos. La prueba iteration-3-test comprueba Swagger UI, sus assets, cuatro operaciones OpenAPI y cinco DTOs, además de comandos y evolución temporal del banco. Ejecutar los scripts secuencialmente y sin operar el panel: comparten estado. frontend-proxy-test requiere también Vite en 5173 y comprueba Content-Type y JSON de las consultas del panel en ambos puertos.
 
 La suite .NET incluye pruebas del banco con reloj controlado: barridos, ida y vuelta, parpadeo, velocidad, congelamiento, validaciones y STOP ALL.
 
@@ -133,3 +135,35 @@ Códigos: DEVICE_OFFLINE→503, TIMEOUT→504, INVALID_COMMAND→400, INVALID_PA
 `fault-test.ps1` inicia una instancia aislada en 5081 con cinco fallas, comprueba códigos HTTP/no mutación y un componente sano, y detiene su proceso al finalizar. Requiere backend compilado y puerto libre; acepta `-Port`. No modifica archivos de configuración ni variables globales.
 
 Checklist visual adicional: extender/retraer/parar hidráulico y observar posición, aplicar servo 0/90/180, activar fallas con el comando anterior, confirmar offline y timeout sin cambio de ángulo, operar otro componente y comprobar STOP ALL. Repetir en notebook, tablet y móvil. Usar Swagger Try it out para comandos y consulta de estados.
+
+## Secuencias — Iteración 5
+
+- GET `/api/sequences`: catálogo y pasos.
+- GET `/api/sequences/{id}`: definición; 404 si no existe.
+- POST `/api/sequences/{id}/start`: 200 con ejecución RUNNING; 404 desconocida; 409 OPERATION_CONFLICT si existe una ejecución o parada en curso.
+- GET `/api/sequences/execution`: ejecución actual/última; IDLE inicialmente. Incluye runId, sequenceId, status, currentStep, totalSteps, startedAt, finishedAt, elapsedSeconds, lastResult y error.
+- POST `/api/sequences/cancel`: cancela y aplica parada global; 200 con ejecución. Sin ejecución activa conserva el estado terminal e igualmente detiene componentes.
+- GET `/api/sequences/events?after=0`: eventos automáticos posteriores al cursor; se retienen hasta 500 en memoria, con runId, hora, origen, componente, comando y resultado.
+
+Durante RUNNING los comandos manuales devuelven 409 OPERATION_CONFLICT. Consultas, cancelación y STOP ALL siguen disponibles. STOP ALL mantiene 204 o snapshot 200 con includeState=true. Cancela la secuencia antes de detener componentes; permite comandos nuevos posteriores a la parada confirmada. Fallas de steps producen FAILED, registran componente/código y aplican parada segura sin ejecutar pasos posteriores. Servo conserva ángulo confirmado. No hay persistencia ni reanudación automática.
+
+SHOW_FNE: luces 0 s, barrido derecha 1 s, izquierda 3 s, motor adelante 40% 5 s, extender 7 s, servo 120° 9 s, blink 11 s, retraer 14 s, motor stop 16 s, iluminación off 17 s, hidráulico stop y COMPLETED aproximadamente 19 s. Cada delay se cuenta desde la confirmación del paso anterior.
+
+sequence-test comprueba tiempos reales, finalización, conflictos 409 y cancelación/STOP ALL después del paso hidráulico, observando otros 13 segundos para descartar reactivaciones. No operar el panel durante estas pruebas. En revisión visual, iniciar SHOW FNE, observar progreso, luces, banco, motor, pistón y servo; repetir y detener después de varios pasos. Confirmar CANCELLED, historial MANUAL/SEQUENCE y controles recuperados.
+
+## Digital Twin — Iteración 6
+
+La Vista Carroza reutiliza el estado de useDevices; no requiere endpoints nuevos. Los ocho LED son los booleanos channels confirmados (incluido STOP_EFFECT, que congela patrón). Ruedas: 60/speed segundos por vuelta, adelante/reversa; motor parado o velocidad cero pausa la animación. Hidráulico desplaza la plataforma según position y servo gira según grados confirmados. Sin interpolación temporal ni extrapolación. API offline conserva la última representación y advierte que puede estar desactualizada.
+
+Pruebas frontend sin nuevas dependencias:
+
+```powershell
+npm --prefix frontend run test
+```
+
+Compila los módulos de prueba con TypeScript en .test-build (ignorado por Git), ejecuta node:test y renderiza SVG con react-dom/server. Comprueba mapping, canales, sentido/velocidad, posiciones, STOP ALL, estados de secuencia y ausencia de lógica de control en la vista.
+
+Revisión visual: iniciar ambos servidores en 5173/5080. No ejecutar scripts HTTP mientras se opera manualmente. Observar Vista Carroza y HUD al encender/apagar luces, barridos derecha/izquierda, BLINK, motor adelante a 20/50/100%, STOP, hidráulico y servo. Ejecutar SHOW_FNE completo; repetir y pulsar Detener todo con movimientos activos. El HUD debe coincidir con el panel. Verificar móvil sin overflow y reducción de movimiento (ruedas estáticas, HUD y posiciones conservados). La temporización de LED continúa siendo exclusivamente del backend.
+
+
+La suite frontend contiene 11 pruebas, incluida la regla de movimiento reducido y su indicador estático alternativo. Resultados actuales y alcance exacto de revisión visual: ITERACION-6.md.

@@ -1,4 +1,5 @@
 import { Sequences } from './Sequences';
+import { CarrozaView } from './carroza/CarrozaView';
 import { HydraulicControls, ServoControls } from './PositionControls';
 import { LightBank } from './LightBank';
 import { useDevices } from './useDevices';
@@ -12,6 +13,7 @@ export function App() {
     <p className="feedback" role="status">{pending || confirmation || 'Los controles reflejan el estado confirmado por el backend.'}</p>
     {error && <p className="error" role="alert">{error} Se conserva el último estado confirmado.</p>}
     {devices.length === 0 && <p className="empty">Esperando los componentes de la API…</p>}
+    <CarrozaView devices={devices} connected={connected} execution={execution} />
     <Sequences execution={execution} pending={sequencePending || Boolean(pending) || connected !== true} error={sequenceError} start={() => void startSequence()} cancel={() => void cancelSequence()} />
     <section className="devices" aria-label="Componentes">
       {devices.filter(device => device.type !== 'light_bank').map(device => <article key={device.id} aria-label={device.name}>

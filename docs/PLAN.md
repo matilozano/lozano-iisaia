@@ -27,11 +27,15 @@ El catálogo y las reglas de validación están en Domain. Application coordina 
 
 ## Iteraciones posteriores — pendientes
 
-El README describe el objetivo completo del proyecto, no funcionalidades incluidas en esta primera entrega. Swagger y banco de iluminación se incorporan en Iteración 3. Hidráulico, servo y fallas se incorporan en Iteración 4. Secuencias, ESP32, firmware, GPIO, autenticación y base de datos continúan pendientes.
+El README describe el objetivo completo del proyecto. Swagger y banco de iluminación se incorporaron en Iteración 3; hidráulico, servo y fallas en Iteración 4; secuencias coordinadas en Iteración 5. ESP32 real, firmware, GPIO, autenticación y base de datos continúan pendientes.
 
-La documentación anterior marcaba como implementadas funciones de iteraciones posteriores cuyos archivos ya no existían al comenzar esta tarea. Este plan refleja el alcance de Iteración 1 solicitado para el repositorio actual.
+Las decisiones de Iteración 1 anteriores son históricas; las secciones siguientes registran las ampliaciones implementadas.
 
 No se realizan commits de Git en esta tarea.
+
+## Iteración 5 — Secuencias coordinadas
+
+Modelo genérico en Domain, ejecución temporal en Application mediante el mismo ComponentCommandExecutor usado por comandos manuales. SHOW_FNE tiene 14 pasos y dura aproximadamente 19 segundos. OperationCoordinator serializa las mutaciones, bloquea comandos manuales durante RUNNING y da prioridad a STOP ALL invalidando solicitudes anteriores. Cancelación y fallas aplican parada segura; no hay pasos posteriores. UI con polling, progreso e historial MANUAL/SEQUENCE. Ver ITERACION-5.md y DESARROLLO.md. El Digital Twin se incorpora posteriormente en Iteración 6.
 
 ## Iteración 2 — Arquitectura
 
@@ -43,3 +47,10 @@ Swagger/OpenAPI en Development; banco lógico de ocho canales con efectos tempor
 ## Iteración 4
 
 Implementados hydraulic-1 (HYDRAULIC_ACTUATOR), servo-1 (SERVO) y fallas reproducibles por configuración del simulador. STOP ALL ofrece una instantánea opcional sin romper su respuesta 204 histórica. Se mantienen servicios y gateway genéricos; no hay rutas específicas por dispositivo. Ver ITERACION-4.md y DESARROLLO.md para alcance, contrato, configuración y pruebas. ESP32, firmware, GPIO, autenticación, persistencia y secuencias complejas continúan fuera de alcance.
+
+## Iteración 6 — Vista Carroza / Digital Twin
+
+SVG propio del chasis, ruedas, iluminación, plataforma hidráulica y pieza servo. Comparte devices/execution/connected de useDevices con el panel; no incorpora consultas, comandos ni temporización de secuencias. El mapping de presentación y los componentes SVG están separados en frontend/src/carroza. Los contratos HTTP y puertos se conservan. Detalle y verificaciones en ITERACION-6.md. La Iteración 7 no se implementa.
+
+
+Verificación de cierre de Iteración 6 repetida el 2026-10-06: builds, suites y regresión HTTP aprobados; revisión visual de controles, show y parada realizada. Pendiente la activación manual de movimiento reducido; cobertura CSS/automatizada aprobada. Ver ITERACION-6.md.

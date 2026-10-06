@@ -137,11 +137,11 @@ Presentación
 El navegador puede cerrarse sin que la temporización dependa de JavaScript del
 cliente.
 
-### Alcance actual — Iteración 2
+### Alcance histórico — Iteración 2
 
-Las secuencias descriptas arriba son una evolución futura, no una funcionalidad implementada. La Iteración 2 conserva exclusivamente las luces frontales, laterales, motor y parada global de la Iteración 1.
+En Iteración 2 las secuencias todavía eran futuras. Esa entrega conservó exclusivamente las luces frontales, laterales, motor y parada global de la Iteración 1. La extensión actual está documentada al final de este archivo.
 
-La implementación actual sigue estas responsabilidades:
+La implementación de Iteración 2 seguía estas responsabilidades:
 
 - `Controllers/DevicesController`: frontera HTTP; depende de `IComponentService`. `DeviceMapping` convierte requests y resultados sin ejecutar reglas de componentes.
 - `Contracts/DTOs`: datos del contrato HTTP, sin dependencias del dominio ni del simulador.
@@ -183,3 +183,11 @@ Swagger se configura en Composition Root y se publica mediante middleware solo e
 SimulatedHydraulic y SimulatorFaultPlan viven en Infrastructure/Gateways. El primero integra el desplazamiento bajo el lock del gateway; el segundo rechaza comandos de forma determinista sin alterar la lógica normal. ComponentOperationException expresa códigos de dominio sin HTTP; DevicesController traduce esos códigos a respuestas HTTP sin conocer el simulador. La configuración del plan se inyecta en Composition Root.
 
 StopAllAndGetStatesAsync recorre la misma abstracción de servicio/gateway y captura estados con exclusión mutua. No se incorporan rutas particulares para hidráulico o servo. El frontend representa posiciones recibidas y conserva errores por componente. Contratos completos en DESARROLLO.md.
+
+## Iteración 5: secuencias
+
+SequenceCatalog/SequenceDefinition/SequenceStep pertenecen a Domain y no conocen componentes concretos fuera de la definición de demostración. SequencesController mapea DTOs y delega en ISequenceService. SequenceService conserva ejecución y eventos en memoria; usa ComponentCommandExecutor, compartido con ComponentService, que aplica validación de Domain y llama IComponentGateway. No se duplica el despacho de comandos.
+
+OperationCoordinator es singleton, al igual que ambos servicios de aplicación: serializa mutaciones con un semáforo, cancela el token de ejecución e invalida solicitudes en espera al recibir una parada. STOP ALL espera el comando que ya estaba en curso y después aplica la parada del gateway; ningún step pendiente puede ejecutarse después de su confirmación. SequenceLifetime aplica parada al cerrar el host. Program.cs solo registra estas dependencias.
+
+Frontend consulta estados, ejecución y eventos; no temporiza pasos. El catálogo de esta entrega contiene SHOW_FNE. Contratos y políticas completos en ITERACION-5.md y DESARROLLO.md.

@@ -53,7 +53,7 @@ public sealed class DevicesController(IComponentService service) : ControllerBas
         catch (ArgumentException error) { return BadRequest(new CommandErrorDto(400, "INVALID_COMMAND", error.Message)); }
     }
 
-    /// <summary>Apagar luces y todos los canales, cancelar efectos y detener el motor.</summary>
+    /// <summary>Cancelar secuencias y efectos, apagar iluminación y detener motor y actuador; conservar el ángulo del servo.</summary>
     /// <remarks>204 confirma la parada; includeState=true devuelve 200 con todos los estados tomados bajo el mismo bloqueo. Hidráulico detenido en posición alcanzada; servo conserva ángulo. Banco conserva velocidad; motor queda a 0%.</remarks>
     [HttpPost("stop-all")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
