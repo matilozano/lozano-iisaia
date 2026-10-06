@@ -191,3 +191,9 @@ SequenceCatalog/SequenceDefinition/SequenceStep pertenecen a Domain y no conocen
 OperationCoordinator es singleton, al igual que ambos servicios de aplicación: serializa mutaciones con un semáforo, cancela el token de ejecución e invalida solicitudes en espera al recibir una parada. STOP ALL espera el comando que ya estaba en curso y después aplica la parada del gateway; ningún step pendiente puede ejecutarse después de su confirmación. SequenceLifetime aplica parada al cerrar el host. Program.cs solo registra estas dependencias.
 
 Frontend consulta estados, ejecución y eventos; no temporiza pasos. El catálogo de esta entrega contiene SHOW_FNE. Contratos y políticas completos en ITERACION-5.md y DESARROLLO.md.
+
+## Presentación confirmada — Iteración 6
+
+useDevices conserva la sincronización única de dispositivos, ejecución y eventos. App entrega el mismo estado al panel y CarrozaView; model.ts adapta datos sin efectos laterales. CarrozaSvg/Visuals y el HUD representan canales, velocidad, dirección y posiciones recibidas; CSS solo anima la presentación. No hay consultas ni temporización de SHOW_FNE dentro del Twin. Contrato y decisiones visuales en DESARROLLO; evidencia en ITERACION-6.
+
+Las secciones de iteraciones anteriores describen su contexto histórico. Para las reglas permanentes de cambios y cierre, consultar [AGENTS](../AGENTS.md) y [HARNESS](HARNESS.md).

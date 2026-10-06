@@ -1,5 +1,9 @@
 # Componentes
 
+## Alcance del documento
+
+Las capacidades y nombres siguientes son conceptuales; no implican campos o acciones HTTP nuevos. El contrato implementado (incluido start con direction/speed para motor) está en [DESARROLLO](DESARROLLO.md). Conservarlo al implementar clientes.
+
 ## Modelo
 
 Un componente representa un dispositivo lógico controlable.
@@ -150,7 +154,7 @@ Un componente offline no debe confirmar comandos como ejecutados.
 
 ## Errores simulables
 
-El SimulatorComponentGateway debe evolucionar para poder representar:
+El SimulatorComponentGateway implementa fallas reproducibles por configuración:
 
 - DEVICE_OFFLINE;
 - INVALID_COMMAND;

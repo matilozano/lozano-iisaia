@@ -1,173 +1,77 @@
-# AGENTS.md — Simulador y Control de Componentes Electromecánicos
+# AGENTS.md — Harness del TP Final FNE
 
-## Objetivo
+## Propósito y alcance
 
-Este repositorio implementa una plataforma web para simular y controlar
-componentes electromecánicos.
+Plataforma de simulación y control de componentes electromecánicos de una carroza FNE. La aplicación debe poder usar otro gateway en el futuro sin trasladar lógica de control al frontend.
 
-El caso de aplicación inicial es una carroza técnica de la
-Fiesta Nacional de los Estudiantes (FNE).
+Este archivo contiene reglas permanentes. El alcance de cada entrega se define en [docs/PLAN.md](docs/PLAN.md), no se deduce del número de iteración ni de ejemplos futuros del README. Si una iteración no está definida, informar la ausencia y solicitar su alcance; no inventarla ni avanzar automáticamente a la siguiente. Las tareas de documentación o refinamiento del Harness no reciben número de iteración funcional.
 
-El sistema debe permitir trabajar inicialmente sin hardware mediante un
-simulador y posteriormente utilizar un ESP32 sin modificar la lógica
-principal de la aplicación.
+## Lectura y fuentes
 
-## Documentación obligatoria
+Antes de cambios relevantes, leer:
 
-Antes de realizar cambios relevantes, consultar:
+- [docs/PLAN.md](docs/PLAN.md): alcance aprobado y estado actual.
+- [docs/DESARROLLO.md](docs/DESARROLLO.md): entorno, comandos de verificación y contrato HTTP implementado.
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): responsabilidades y dependencias.
+- [docs/COMPONENTS.md](docs/COMPONENTS.md): comportamiento de componentes; distinguir modelo conceptual de DTOs reales.
+- [docs/HARNESS.md](docs/HARNESS.md): flujo de trabajo, evidencia y formato de cierre.
+- AGENTS de las áreas afectadas: [backend](backend/AGENTS.md), [frontend](frontend/AGENTS.md), y cualquier instrucción más específica existente.
 
-- `PLAN.md`: etapas y decisiones de implementación.
-- `DESARROLLO.md`: ejecución, compilación y comprobaciones.
-- `docs/ARCHITECTURE.md`: arquitectura y dependencias permitidas.
-- `docs/COMPONENTS.md`: componentes y comportamiento esperado.
-- `docs/ESP32-PROTOCOL.md`: contrato entre backend y ESP32.
+Consultar [docs/ESP32-PROTOCOL.md](docs/ESP32-PROTOCOL.md) cuando se afecte el gateway o su contrato; está pendiente y no autoriza implementar hardware. Leer los informes `docs/ITERACION-N.md` relevantes para el cambio o la continuación. No es necesario releer todos para una modificación local cuya historia ya está cubierta por el Harness.
 
-Si se trabaja en frontend, consultar además:
+Las instrucciones explícitas del usuario gobiernan la tarea. Ante contradicciones entre documentación y código, identificar la diferencia y preservar contratos hasta resolverla; no modificar código solo para satisfacer un ejemplo histórico. Los informes registran evidencia de una ejecución, no sustituyen nuevas verificaciones.
 
-- `frontend/AGENTS.md`
+## Estado del repositorio y continuidad
 
-Si se trabaja en backend, consultar además:
+1. Confirmar rama, `git status` y `git diff`; inspeccionar también archivos no trackeados y código relevante antes de editar.
+2. Trabajar en `tpfinal`. Si la rama es otra, informarlo; no cambiarla automáticamente.
+3. Conservar cambios existentes. No resetear, descartar, hacer checkout de archivos modificados ni sobrescribir trabajo sin inspección. No hacer commit ni push salvo instrucción explícita posterior.
+4. Al retomar una interrupción, identificar qué está completo, parcial y pendiente según el código real. Continuar desde allí; no reiniciar la implementación ni confiar en un informe parcial como prueba de éxito.
+5. Hacer el cambio mínimo necesario. No reestructurar áreas ajenas ni crear placeholders de funciones futuras. Resolver decisiones locales dentro del alcance sin pedir aprobación rutinaria.
 
-- `backend/AGENTS.md`
+## Fronteras obligatorias
 
-## Arquitectura general
+```text
+Frontend React → HTTP → Controllers → Application Services → IComponentGateway
+                                                               ↓
+                                                   SimulatorComponentGateway
+```
 
-El flujo obligatorio es:
+- `Program.cs` es Composition Root: configuración, DI, middleware y `MapControllers`. Sin endpoints de aplicación Minimal API ni reglas de negocio.
+- Controllers traducen HTTP/DTOs y delegan; no dependen de gateways concretos ni manejan estado del simulador.
+- Domain contiene modelos/reglas; Application coordina casos de uso mediante abstracciones; Infrastructure implementa el gateway y la simulación.
+- Frontend no conoce GPIO, relés, drivers, protocolo interno ni direcciones del ESP32; nunca se conecta directamente a hardware.
+- `SimulatorComponentGateway` es el gateway implementado. `Esp32ComponentGateway` es una evolución futura, no una clase obligatoria a crear hoy. Selección por configuración/DI.
+- Mantener componentes y comandos genéricos, compatibles con luces, banco, motor, hidráulico y servo. Conservar `/api/devices` y sus contratos; cualquier extensión indispensable debe justificarse, documentarse y probar compatibilidad.
 
-Usuario
-  ↓
-Frontend React
-  ↓ HTTP
-ASP.NET Core API
-  ↓
-Application Services
-  ↓
-IComponentGateway
-  ├── SimulatorComponentGateway
-  └── Esp32ComponentGateway
-          ↓
-        ESP32
-          ↓
-       Hardware
+## Estado confirmado, secuencias y seguridad
 
-## Principios
+- Enviar una intención no confirma ejecución. UI y Digital Twin representan exclusivamente respuestas/consultas del backend; ante error conservan el último estado confirmado e identifican el fallo/componente.
+- Panel, secuencias y Twin comparten la fuente de estado existente. No duplicar polling, ejecución de comandos ni temporización de secuencias en los componentes visuales.
+- Secuencias se ejecutan en Application con el mismo mecanismo de comandos manuales. Backend decide exclusión y concurrencia; botones deshabilitados no son una garantía suficiente.
+- STOP ALL tiene prioridad: cancelar secuencia y trabajo pendiente, detener motor/hidráulico/efectos, apagar iluminación y sincronizar estados confirmados. Conservar posición del servo según contrato; no inventar un ángulo seguro.
+- Ningún step anterior pendiente puede reactivar componentes después de la confirmación de parada. Se admiten órdenes nuevas posteriores: la parada actual no es un enclavamiento permanente.
+- Fallas simuladas deben ser controladas y reproducibles, separadas del comportamiento normal; sin lógica especial en Controllers. No asumir éxito ni ejecución tardía tras TIMEOUT.
+- No confundir garantías del simulador con seguridad física de hardware desconectado.
 
-### Frontend
+## Entorno y alcance futuro
 
-El frontend representa el estado físico y envía intenciones del operador.
+Puertos del TP: frontend `http://127.0.0.1:5173`, backend `http://127.0.0.1:5080`. Conservarlos y verificar `/api` mediante proxy; no atribuir logs de otros proyectos a este sistema. Diagnóstico y pruebas en DESARROLLO.
 
-No conoce:
-
-- GPIO;
-- relés;
-- drivers;
-- protocolo interno del ESP32;
-- detalles eléctricos.
-
-Nunca debe comunicarse directamente con el ESP32.
-
-### Backend
-
-El backend contiene los casos de uso y coordina los componentes.
-
-Los endpoints HTTP deben implementarse mediante ASP.NET Core Controllers.
-
-No implementar endpoints de aplicación mediante Minimal APIs en Program.cs.
-
-### Gateway
-
-Toda interacción con componentes pasa por:
-
-`IComponentGateway`
-
-Deben existir implementaciones intercambiables:
-
-- `SimulatorComponentGateway`
-- `Esp32ComponentGateway`
-
-La selección debe realizarse mediante configuración e inyección de dependencias.
-
-### Simulador
-
-El simulador debe reproducir comportamiento observable de los componentes
-sin requerir hardware físico.
-
-No debe existir lógica especial en Controllers para determinar si se utiliza
-simulador o hardware real.
-
-## Componentes iniciales
-
-El diseño debe contemplar:
-
-- LIGHT
-- MOTOR
-- HYDRAULIC_ACTUATOR
-- SERVO
-
-No asumir que solamente existirán luces y motores.
-
-## Seguridad operacional
-
-STOP ALL tiene prioridad conceptual sobre las operaciones normales.
-
-Debe:
-
-- detener motores;
-- detener actuadores;
-- cancelar secuencias;
-- detener efectos;
-- apagar iluminación cuando corresponda;
-- actualizar el estado del sistema.
-
-El frontend nunca debe asumir que un comando fue ejecutado hasta recibir
-confirmación del backend.
-
-## Desarrollo incremental
-
-No implementar todo el sistema en una única modificación.
-
-Trabajar por incrementos verificables.
-
-Orden recomendado:
-
-1. contratos;
-2. simulador;
-3. API;
-4. frontend;
-5. pruebas;
-6. secuencias;
-7. simulación de fallas;
-8. protocolo ESP32;
-9. firmware;
-10. gateway real.
-
-## Antes de implementar
-
-Para tareas no triviales:
-
-1. inspeccionar el código existente;
-2. identificar los archivos afectados;
-3. verificar las reglas del AGENTS.md correspondiente;
-4. realizar el cambio mínimo necesario;
-5. compilar;
-6. ejecutar las pruebas relacionadas;
-7. revisar que no se hayan violado las fronteras arquitectónicas.
-
-No reestructurar partes no relacionadas con la tarea sin necesidad.
+No incorporar ESP32 real, firmware, GPIO, autenticación, persistencia, MQTT, SignalR/WebSockets o editor de secuencias por inferencia. Requieren alcance explícito futuro; no son prohibiciones irrevocables cuando se apruebe ese trabajo.
 
 ## Definition of Done
 
-Una tarea no está terminada solamente porque compile.
+Para un incremento funcional o refactor de código:
 
-Debe cumplirse, cuando corresponda:
+- builds backend y frontend correctos;
+- suites backend/simulador y frontend aprobadas, conservando pruebas previas;
+- smoke, contrato, regresión de componentes, fallas, secuencias y proxy según DESARROLLO ejecutados;
+- fronteras arquitectónicas verificadas;
+- Swagger/OpenAPI verificado si se afecta API/DTOs/documentación HTTP;
+- revisión visual intentada cuando se afecta UI, animación o sincronización; observar coherencia con API, errores, STOP ALL, responsive y movimiento reducido;
+- documentación actualizada y reporte con archivos, decisiones, comandos, resultados y pendientes reales.
 
-- backend compila;
-- frontend compila;
-- tests pasan;
-- smoke test pasa;
-- comportamiento visual coincide con el estado;
-- errores se muestran correctamente;
-- no se introducen dependencias arquitectónicas prohibidas;
-- documentación se actualiza si cambió un contrato.
+Al retomar trabajo interrumpido, repetir las verificaciones de cierre del alcance actual. No aprobar por resultados de otra ejecución. Si una herramienta falla, registrar causa, comprobaciones alternativas y revisión pendiente; build/HTTP no equivalen a aprobación visual. Una tarea con requisitos no verificados debe reportar esa limitación, no un cumplimiento total ficticio.
 
-Consultar `DESARROLLO.md` para los comandos concretos.
+Para cambios exclusivamente documentales, aplicar la verificación documental de DESARROLLO; builds y pruebas funcionales pueden declararse **no aplicables**, con razón explícita. Esto no permite omitirlas si cambian código, contratos, configuración ejecutable o scripts.

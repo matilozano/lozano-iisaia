@@ -133,10 +133,10 @@ Infrastructure/
 
 `SimulatorComponentGateway` mantiene el estado virtual.
 
-`Esp32ComponentGateway` traduce los comandos al protocolo definido en
+Cuando se implemente, `Esp32ComponentGateway` traducirá los comandos al protocolo definido en
 `docs/ESP32-PROTOCOL.md`.
 
-Ambos implementan el mismo contrato.
+El gateway futuro deberá implementar el mismo contrato. No crear un placeholder ni firmware para satisfacer este ejemplo.
 
 ## Modelo de componentes
 
@@ -149,13 +149,13 @@ Preferir recursos genéricos.
 
 Ejemplo:
 
-GET /api/components
+GET /api/devices
 
-GET /api/components/{id}
+GET /api/devices/{id}
 
-POST /api/components/{id}/commands
+POST /api/devices/{id}/commands
 
-POST /api/components/stop-all
+POST /api/devices/stop-all
 
 Los comandos dependen de las capabilities del componente.
 
@@ -250,3 +250,15 @@ Antes de finalizar un cambio:
    - Esp32ComponentGateway
 
 Deben depender de servicios/abstracciones.
+
+## Reglas consolidadas de aplicación y regresión
+
+- Domain y Application no dependen de Infrastructure, Controllers, Contracts ni ASP.NET. El mapeo DTO/dominio queda en la frontera HTTP.
+- Reutilizar ComponentCommandExecutor para comandos manuales y automáticos. Modelos de secuencia genéricos; IDs concretos solo en definiciones del catálogo.
+- Conservar estados IDLE/RUNNING/COMPLETED/CANCELLED/FAILED y errores identificables. Durante RUNNING, rechazo backend 409 de comandos manuales incompatibles y de otro inicio; consultas y parada permanecen disponibles.
+- Cancelación y STOP ALL deben invalidar pasos y solicitudes previas en espera, coordinar la mutación en vuelo y devolver el estado confirmado. Mantener 204 histórico y snapshot 200 opcional de STOP ALL. No confiar solo en cancelar un timer.
+- Si un step falla, registrar código/componente, aplicar la parada definida y finalizar FAILED sin ejecutar los siguientes. No fabricar confirmaciones ni borrar condición offline durante la parada simulada.
+- Usar tiempo monotónico y reloj/delay controlable para pruebas temporales. Cubrir límites, progreso, cancelación antes del siguiente paso, concurrencia y fallas deterministas. Complementar con ejecución HTTP real de SHOW_FNE y STOP ALL a mitad del recorrido; observar más allá del próximo step y del final previsto.
+- Un error de validación o falla inyectada no debe mutar el componente como si hubiera tenido éxito. Mantener pruebas de otros componentes operables cuando no existe exclusión por secuencia.
+- Extensiones indispensables de DTOs/rutas: compatibilidad, respuestas de error y OpenAPI, sin renombrar rutas públicas por una preferencia interna.
+- Comandos concretos de builds, suites ejecutables y scripts HTTP: [DESARROLLO](../docs/DESARROLLO.md). Ejecutar regresiones contra una instancia sin operaciones manuales simultáneas. Para tareas solo documentales rige la excepción del AGENTS raíz.

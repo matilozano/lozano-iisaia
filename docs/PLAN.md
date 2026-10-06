@@ -54,3 +54,9 @@ SVG propio del chasis, ruedas, iluminación, plataforma hidráulica y pieza serv
 
 
 Verificación de cierre de Iteración 6 repetida el 2026-10-06: builds, suites y regresión HTTP aprobados; revisión visual de controles, show y parada realizada. Pendiente la activación manual de movimiento reducido; cobertura CSS/automatizada aprobada. Ver ITERACION-6.md.
+
+## Estado actual del Harness
+
+Las iteraciones 1–6 están cerradas; sus reportes preservan resultados y pendientes específicos. No existe alcance aprobado para Iteración 7. Las etapas conceptuales del README y las fases futuras de arquitectura no definen una próxima iteración.
+
+Las reglas comunes de ejecución se consolidan en [AGENTS](../AGENTS.md), los AGENTS por área y [HARNESS](HARNESS.md). Este refinamiento documental no agrega una iteración funcional. El pendiente de revisión manual de movimiento reducido de Iteración 6 conserva su condición; esta tarea documental no lo declara resuelto.

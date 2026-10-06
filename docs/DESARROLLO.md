@@ -167,3 +167,21 @@ Revisión visual: iniciar ambos servidores en 5173/5080. No ejecutar scripts HTT
 
 
 La suite frontend contiene 11 pruebas, incluida la regla de movimiento reducido y su indicador estático alternativo. Resultados actuales y alcance exacto de revisión visual: ITERACION-6.md.
+
+## Matriz de cierre del Harness
+
+Las reglas permanentes están en [AGENTS](../AGENTS.md); el procedimiento de evidencia y reportes está en [HARNESS](HARNESS.md). No es necesario repetirlas en cada prompt.
+
+| Tipo de cambio | Verificación requerida |
+| --- | --- |
+| Incremento funcional o refactor de código | Ambos builds, suite .NET/simulador, npm test, scripts smoke/contract/iteration-3/iteration-4/fault/sequence/frontend-proxy y búsquedas arquitectónicas de este documento |
+| API, DTOs o documentación HTTP | Además, OpenAPI/rutas/esquemas/respuestas y Swagger disponible; probar operación afectada |
+| UI, animación o sincronización | Además, revisión visual con API real y checklist aplicable, incluyendo SHOW_FNE/STOP ALL, responsive y movimiento reducido |
+| Continuación después de interrupción | Repetir el cierre aplicable al código actual; resultados anteriores no aprueban la nueva ejecución |
+| Solo documentación, sin cambiar contratos ni archivos ejecutables | Revisar diff/whitespace, enlaces/rutas/comandos mencionados y coherencia con código/alcance; registrar builds/HTTP/visual como NO APLICA con motivo |
+
+Los scripts HTTP mutan estado: ejecutarlos secuencialmente, sin otra prueba o persona operando la misma API. La suite .NET independiente puede verificarse por separado. Confirmar primero servidores en 5173/5080 y dejar el simulador detenido al finalizar. El puerto 5081 de fault-test es una instancia temporal aislada del script, no sustituye los puertos del TP.
+
+Diagnóstico de HTML en `/api`: registrar request exacta y respuesta (status, Content-Type y contenido), comprobar API directa y proxy con frontend-proxy-test, identificar servidor y configuración Vite. No esconder el fallo de parseo ni cambiar puertos. Si no se reproduce, documentarlo sin atribuir una causa no demostrada.
+
+En PowerShell, comprobar el resultado individual y código de salida de cada comando; el éxito del último no demuestra que los anteriores pasaron. `rg` sin coincidencias retorna 1 en las búsquedas arquitectónicas, lo que aquí es el resultado esperado. Para filtrar arrays de Invoke-RestMethod, usar una variable o una expresión parentizada que enumere componentes, sin envolver todo el array como un solo componente.

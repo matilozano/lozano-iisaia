@@ -151,8 +151,8 @@ Estados:
 - STOPPED
 - EXTENDING
 - RETRACTING
-- EXTENDED
-- RETRACTED
+
+No agregar estados de dominio EXTENDED/RETRACTED: los extremos se expresan con position y limitExtended/limitRetracted.
 
 Mostrar posición:
 
@@ -271,3 +271,25 @@ Verificar además manualmente:
 5. ejecutar barrido;
 6. detener efectos;
 7. ejecutar STOP ALL.
+
+## Fuente única de estado y Digital Twin
+
+- Reutilizar useDevices para panel, secuencias y Twin. No crear polling por elemento ni una segunda fuente de estado físico.
+- Separar adquisición, mapping puro de presentación, componentes SVG/HUD y CSS. Mantener App como composición; la vista no envía comandos ni implementa SHOW_FNE.
+- Los canales del banco provienen de channels confirmado, no de un contador o patrón local. Hidráulico/servo usan posiciones confirmadas; no extrapolar movimiento físico. CSS solo representa movimiento según estado, velocidad y dirección recibidos.
+- Mantener distintos los valores solicitados de controles y los valores confirmados. Respuestas anteriores a STOP ALL no pueden volver a pintar estados activos; conservar la protección de sincronización existente.
+- Ante fallo, conservar estado y error por componente; permitir operar otros componentes cuando la política backend lo permita. OFFLINE/TIMEOUT no significan éxito. Una vista desactualizada debe advertirlo, sin inventar datos de hardware.
+- STOP ALL siempre accesible; reflejar snapshot y CANCELLED cuando se confirmen. No cambiar anticipadamente los componentes al presionar el botón.
+- SVG propio con viewBox y dimensiones adaptables; sin imágenes remotas ni dependencias pesadas sin necesidad. Respetar prefers-reduced-motion y ofrecer indicadores estáticos de estado/dirección/velocidad.
+- Historial diferencia MANUAL y SEQUENCE, con hora, componente, comando y resultado; no agregar persistencia por inferencia.
+
+## Evidencia de verificación
+
+Ejecutar también `npm --prefix frontend run test`. Probar mapping backend→presentación y comportamiento significativo; evitar tests de detalles cosméticos que solo repiten CSS. El test de accesibilidad debe comprobar la alternativa al movimiento, no reemplaza por sí solo una prueba manual.
+
+Intentar revisión visual con API real: luces ON/OFF, ambos barridos y BLINK, motor/dirección/varias velocidades/STOP, hidráulico y servo, SHOW_FNE completo y STOP ALL a mitad de secuencia. Comparar panel/Twin con estados confirmados y revisar tamaños menores, errores y movimiento reducido. Documentar qué se observó y qué quedó pendiente. HTTP, snapshots de markup y build no demuestran por sí solos animación visible.
+
+Si `/api` devuelve HTML, identificar URL exacta, status, Content-Type y cuerpo; verificar proxy/backend con frontend-proxy-test. Corregir la causa, no ocultar el error JSON con try/catch ni cambiar puertos para esquivarlo. Si no se reproduce, informar la evidencia y no inventar una causa histórica.
+
+
+Para cambios exclusivamente documentales, aplicar la verificación documental del AGENTS raíz y DESARROLLO; no presentar compilación o revisión visual como realizadas si no se ejecutaron.

@@ -1,5 +1,8 @@
 # Trabajo Práctico Final — Sistema de Control de Carrozas
 
+> **Estado actual y guía de trabajo:** las iteraciones 1–6 implementan el simulador, secuencias y Digital Twin. El gateway real/firmware siguen pendientes. Este README conserva la visión conceptual original; sus etapas no equivalen a iteraciones aprobadas. Alcance actual: [docs/PLAN.md](docs/PLAN.md). Reglas: [AGENTS.md](AGENTS.md) y [docs/HARNESS.md](docs/HARNESS.md). Ejecución y contrato HTTP vigente: [docs/DESARROLLO.md](docs/DESARROLLO.md). En código la abstracción se llama `IComponentGateway`; los nombres `IDeviceGateway` de los ejemplos históricos no son instrucciones para renombrarla.
+
+
 ## 1. Objetivo
 
 Desarrollar una plataforma web para controlar dispositivos electrónicos utilizados en una carroza técnica, permitiendo operar iluminación y movimientos mecánicos desde una interfaz gráfica.
@@ -590,7 +593,7 @@ Ejemplo:
 
 # 14. Cómo se gestionará el contexto
 
-Antes de implementar se trabajará en modo plan.
+Antes de implementar se inspeccionará el estado y el alcance siguiendo AGENTS.md y docs/HARNESS.md. No se requiere una aprobación adicional para decisiones rutinarias ya autorizadas.
 
 El proyecto se dividirá en contratos independientes:
 
@@ -916,7 +919,7 @@ Esto permite verificar escenarios difíciles de reproducir de manera controlada 
 
 # 19. Estrategia de commits
 
-Se realizará un commit por cada incremento funcional.
+Los commits/push quedan a cargo del usuario salvo instrucción explícita. La lista siguiente es una propuesta histórica de organización, no autorización para ejecutar Git ni definición de iteraciones.
 
 Ejemplo:
 
