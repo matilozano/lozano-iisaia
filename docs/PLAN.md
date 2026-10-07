@@ -237,3 +237,506 @@ Esta iteración NO incluye:
 La integración física se realizará en una iteración posterior.
 
 Estado de implementación de Iteración 7 (2026-10-07): frontera software implementada y pruebas automatizadas aprobadas, incluyendo regresión Simulator y transporte controlado ESP32. Revisión interactiva de Swagger pendiente por falla del navegador; hardware/firmware fuera de alcance. Resultados y limitaciones del entorno en [ITERACION-7](ITERACION-7.md).
+
+## Iteración 8 — Firmware ESP32 y controlador físico
+
+### Objetivo
+
+Implementar el firmware base del ESP32 que permita al controlador físico
+comunicarse con el backend mediante el protocolo definido en
+`docs/ESP32-PROTOCOL.md`.
+
+La Iteración 8 debe convertir al ESP32 en una implementación real del
+controlador esperado por `Esp32ComponentGateway`, manteniendo sin cambios
+la arquitectura de aplicación desarrollada hasta la Iteración 7.
+
+El objetivo principal es validar la frontera:
+
+Frontend
+    ↓
+ASP.NET Core API
+    ↓
+Application Services
+    ↓
+IComponentGateway
+    ↓
+Esp32ComponentGateway
+    ↓ HTTP
+ESP32
+    ↓
+Hardware Abstraction
+
+La disponibilidad de una placa física no debe ser obligatoria para poder
+compilar y verificar la lógica principal del firmware.
+
+---
+
+### 1. Proyecto de firmware
+
+Crear un proyecto independiente para el firmware ESP32.
+
+Ubicación sugerida:
+
+firmware/
+    esp32-carroza/
+
+El firmware debe mantenerse separado del backend y frontend.
+
+Documentar:
+
+- plataforma utilizada;
+- estructura del proyecto;
+- procedimiento de compilación;
+- configuración necesaria;
+- procedimiento para cargar el firmware cuando exista hardware disponible.
+
+No introducir dependencias innecesarias con .NET o React.
+
+---
+
+### 2. Protocolo ESP32 v1
+
+Implementar el lado ESP32 del contrato definido en:
+
+`docs/ESP32-PROTOCOL.md`
+
+Soportar las operaciones existentes:
+
+- GET_STATE;
+- EXECUTE;
+- STOP_ALL.
+
+Respetar:
+
+- versión del protocolo;
+- UUID/correlationId;
+- componentId;
+- command;
+- parámetros;
+- respuesta;
+- códigos de error;
+- snapshot confirmado.
+
+No crear un protocolo alternativo si el contrato existente resulta
+suficiente.
+
+Si durante la implementación se detecta una inconsistencia real en el
+protocolo, documentarla y realizar el cambio mínimo compatible necesario.
+
+---
+
+### 3. Servidor HTTP del ESP32
+
+Implementar el endpoint HTTP requerido por `HttpEsp32Transport`.
+
+El firmware debe:
+
+1. recibir el mensaje;
+2. validar el envelope;
+3. validar versión;
+4. validar correlationId;
+5. identificar operación;
+6. validar componente y comando;
+7. ejecutar mediante la abstracción de hardware;
+8. obtener el estado resultante;
+9. devolver una respuesta conforme al protocolo.
+
+No devolver éxito antes de que el comando haya sido aceptado por el
+controlador.
+
+---
+
+### 4. Command Dispatcher
+
+Separar el protocolo HTTP de la ejecución de componentes.
+
+Arquitectura conceptual:
+
+HTTP Server
+    ↓
+Protocol Parser
+    ↓
+Command Dispatcher
+    ↓
+Component Controller
+    ↓
+Hardware Abstraction
+
+El servidor HTTP no debe contener directamente lógica específica de:
+
+- luces;
+- motor;
+- hidráulico;
+- servo;
+- banco de LEDs.
+
+El dispatcher debe resolver el componente y delegar la operación.
+
+---
+
+### 5. Estado del controlador
+
+Mantener un estado explícito de los componentes controlados por ESP32.
+
+Como mínimo representar los componentes existentes del sistema:
+
+- luces frontales;
+- luces laterales;
+- banco de LEDs;
+- motor;
+- actuador hidráulico;
+- servo.
+
+El estado informado al backend debe representar el último estado
+confirmado por el controlador.
+
+No inventar estados que no existan en el modelo actual.
+
+---
+
+### 6. Hardware Abstraction Layer
+
+Crear una capa de abstracción entre la lógica del firmware y los GPIO.
+
+Conceptualmente:
+
+Component Controller
+        ↓
+IHardware / Hardware Abstraction
+        ├── SimulatedHardware
+        └── Esp32Hardware
+
+Los nombres concretos pueden adaptarse a las convenciones de la plataforma.
+
+La lógica de protocolo y despacho no debe depender directamente de números
+de GPIO.
+
+Esto debe permitir probar la mayor parte del firmware sin conectar
+hardware físico.
+
+---
+
+### 7. Implementación simulada del hardware
+
+Incluir una implementación simulada/fake de la abstracción de hardware
+para pruebas.
+
+Debe permitir comprobar:
+
+- encendido/apagado de luces;
+- estados del banco;
+- dirección y velocidad del motor;
+- posición hidráulica;
+- posición del servo;
+- STOP_ALL.
+
+Esta simulación pertenece exclusivamente al firmware y a sus pruebas.
+
+No reemplaza `SimulatorComponentGateway` del backend.
+
+---
+
+### 8. STOP_ALL
+
+STOP_ALL es una operación prioritaria del controlador.
+
+Debe llevar los componentes a un estado seguro compatible con el contrato
+existente.
+
+Como mínimo:
+
+- detener motor;
+- detener movimiento hidráulico;
+- detener efectos del banco;
+- apagar las luces que corresponda según la política existente;
+- impedir que una operación pendiente vuelva a activar componentes después
+  de la parada.
+
+El estado resultante debe devolverse únicamente después de aplicar la
+parada.
+
+El servo debe conservar el comportamiento seguro definido por el contrato
+actual y no asumir una posición nueva si no está especificada.
+
+---
+
+### 9. Watchdog
+
+Implementar un mecanismo de watchdog de comunicación/control.
+
+Si el controlador deja de recibir comunicación válida durante un intervalo
+configurable, debe poder aplicar una política de seguridad.
+
+La política debe priorizar:
+
+- motor detenido;
+- hidráulico detenido;
+- efectos activos detenidos;
+- ausencia de reactivación automática.
+
+El timeout debe estar centralizado/configurable.
+
+No dispersar valores mágicos por el firmware.
+
+Documentar claramente qué componentes modifica el watchdog.
+
+---
+
+### 10. Mensajes demorados y comandos obsoletos
+
+Evitar que un comando recibido con demora pueda revertir un STOP_ALL
+posterior.
+
+Definir una estrategia simple y determinista compatible con el protocolo
+actual.
+
+Puede utilizar información de correlación/orden disponible en el contrato,
+sin introducir infraestructura distribuida innecesaria.
+
+La propiedad requerida es:
+
+Una vez confirmado STOP_ALL, un comando anterior que llegue posteriormente
+no debe reactivar componentes.
+
+Documentar la estrategia utilizada y sus limitaciones.
+
+---
+
+### 11. Validaciones
+
+El firmware debe rechazar de manera controlada:
+
+- versión de protocolo incompatible;
+- operación desconocida;
+- componentId desconocido;
+- comando desconocido;
+- parámetros inválidos;
+- valores fuera de rango;
+- mensajes incompletos;
+- JSON inválido cuando corresponda.
+
+Utilizar los códigos de error definidos por el protocolo existente.
+
+No responder éxito ante comandos inválidos.
+
+---
+
+### 12. Concurrencia
+
+Evitar ejecución concurrente incoherente sobre el estado físico.
+
+La recepción HTTP y la ejecución de comandos deben preservar consistencia
+del estado.
+
+STOP_ALL debe tener prioridad semántica sobre operaciones normales.
+
+No implementar una arquitectura distribuida compleja; utilizar los
+mecanismos de sincronización apropiados para ESP32.
+
+---
+
+### 13. SHOW_FNE
+
+No implementar el motor de secuencias SHOW_FNE dentro del ESP32.
+
+SHOW_FNE continúa perteneciendo al backend.
+
+El ESP32 únicamente debe ejecutar los comandos individuales recibidos.
+
+Debe ser posible ejecutar desde backend:
+
+SHOW_FNE
+    ↓
+Sequence Service
+    ↓
+Esp32ComponentGateway
+    ↓
+ESP32
+
+sin que el firmware conozca la existencia de SHOW_FNE.
+
+---
+
+### 14. Compatibilidad con el backend
+
+La Iteración 8 no debe requerir cambios funcionales en:
+
+- frontend;
+- Controllers;
+- Application Services;
+- motor de secuencias;
+- Digital Twin.
+
+El backend en modo:
+
+ComponentGateway:Simulator
+
+debe continuar funcionando como hasta ahora.
+
+El modo:
+
+ComponentGateway:ESP32
+
+debe ser compatible con el firmware desarrollado en esta iteración.
+
+---
+
+### 15. Configuración de red
+
+La configuración específica de red del ESP32 debe quedar aislada de la
+lógica de componentes.
+
+No almacenar credenciales reales de Wi-Fi en el repositorio.
+
+Proveer configuración de ejemplo o mecanismo documentado para establecer:
+
+- SSID;
+- credenciales;
+- dirección/puerto;
+- parámetros necesarios del controlador.
+
+Los secretos reales deben permanecer fuera del control de versiones.
+
+---
+
+### 16. Pruebas
+
+Agregar pruebas automatizadas de la lógica que pueda ejecutarse sin placa
+física.
+
+Como mínimo verificar:
+
+- parsing de mensajes;
+- validación de protocolo;
+- GET_STATE;
+- EXECUTE;
+- STOP_ALL;
+- luces;
+- banco de LEDs;
+- motor;
+- hidráulico;
+- servo;
+- límites de parámetros;
+- errores;
+- watchdog;
+- rechazo de mensajes obsoletos;
+- consistencia de estado.
+
+Verificar además la compatibilidad de mensajes entre el contrato producido
+por backend y el esperado por firmware.
+
+---
+
+### 17. Integración sin hardware
+
+Cuando no exista una placa ESP32 disponible, debe ser posible verificar:
+
+Backend
+    ↓
+Esp32ComponentGateway
+    ↓
+contrato HTTP
+    ↓
+controlador/firmware verificable en entorno de desarrollo
+
+sin declarar que se realizó una integración física.
+
+Las pruebas sin hardware deben distinguirse explícitamente de las pruebas
+realizadas sobre una placa real.
+
+---
+
+### 18. Integración física opcional
+
+Si durante esta iteración existe una placa ESP32 disponible, se podrá
+realizar una prueba adicional de comunicación real.
+
+La prueba física no es requisito para considerar completada la Iteración 8.
+
+Si se realiza, documentar separadamente:
+
+- placa utilizada;
+- transporte;
+- conectividad;
+- comandos probados;
+- resultados;
+- limitaciones.
+
+No conectar motores, actuadores o cargas de potencia directamente a GPIO.
+
+---
+
+### 19. Documentación
+
+Crear:
+
+`docs/ITERACION-8.md`
+
+Documentar como mínimo:
+
+- arquitectura del firmware;
+- estructura del proyecto;
+- flujo HTTP → protocolo → dispatcher → hardware;
+- estrategia de estado;
+- STOP_ALL;
+- watchdog;
+- protección contra mensajes obsoletos;
+- configuración;
+- pruebas realizadas;
+- diferencia entre pruebas simuladas y físicas;
+- limitaciones y pendientes reales.
+
+Actualizar cuando corresponda:
+
+- `docs/ARCHITECTURE.md`;
+- `docs/COMPONENTS.md`;
+- `docs/DESARROLLO.md`;
+- `docs/ESP32-PROTOCOL.md`.
+
+No modificar retrospectivamente los informes históricos.
+
+---
+
+### 20. Definition of Done específica
+
+La Iteración 8 se considera terminada cuando:
+
+- el firmware compila en el entorno disponible;
+- el protocolo v1 está implementado;
+- GET_STATE funciona;
+- EXECUTE funciona;
+- STOP_ALL funciona;
+- existe separación entre protocolo y hardware;
+- existe una abstracción de hardware verificable sin placa;
+- watchdog está implementado y probado;
+- comandos obsoletos no pueden reactivar componentes después de STOP_ALL;
+- las pruebas automatizadas aplicables pasan;
+- SimulatorComponentGateway continúa sin regresiones;
+- la documentación refleja únicamente verificaciones realmente ejecutadas.
+
+La integración física solo se considera APROBADA si fue ejecutada sobre
+hardware real.
+
+---
+
+### Fuera de alcance
+
+Esta iteración NO incluye:
+
+- electrónica de potencia definitiva;
+- conexión directa de motores de potencia;
+- relés/contactores definitivos;
+- drivers finales;
+- diseño de PCB;
+- cableado definitivo de la carroza;
+- asignación física definitiva de todos los GPIO;
+- MQTT;
+- SignalR/WebSockets;
+- base de datos;
+- autenticación;
+- cambios visuales del frontend;
+- editor de secuencias;
+- migrar SHOW_FNE al ESP32.
+
+La integración completa con actuadores y electrónica real queda para una
+iteración posterior.
