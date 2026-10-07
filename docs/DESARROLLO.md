@@ -185,3 +185,19 @@ Los scripts HTTP mutan estado: ejecutarlos secuencialmente, sin otra prueba o pe
 Diagnóstico de HTML en `/api`: registrar request exacta y respuesta (status, Content-Type y contenido), comprobar API directa y proxy con frontend-proxy-test, identificar servidor y configuración Vite. No esconder el fallo de parseo ni cambiar puertos. Si no se reproduce, documentarlo sin atribuir una causa no demostrada.
 
 En PowerShell, comprobar el resultado individual y código de salida de cada comando; el éxito del último no demuestra que los anteriores pasaron. `rg` sin coincidencias retorna 1 en las búsquedas arquitectónicas, lo que aquí es el resultado esperado. Para filtrar arrays de Invoke-RestMethod, usar una variable o una expresión parentizada que enumere componentes, sin envolver todo el array como un solo componente.
+
+## Gateway ESP32 — Iteración 7
+
+Modo predeterminado conservado: Simulator. Para un controlador compatible con el protocolo v1, configurar sin editar código (reemplazar el host de ejemplo):
+
+```powershell
+dotnet run --project backend/Carroza.Api -- --ComponentGateway:Mode=ESP32 --ComponentGateway:ESP32:Endpoint=http://controlador.local/v1/exchange --ComponentGateway:ESP32:TimeoutMs=2000
+```
+
+Configuración equivalente en appsettings o variables de entorno `ComponentGateway__Mode`, `ComponentGateway__ESP32__Endpoint`, `ComponentGateway__ESP32__TimeoutMs`. Endpoint obligatorio solo en ESP32, timeout 100..30000 ms. No cambiar puertos 5080/5173. Sin placa/servidor compatible las consultas devuelven error JSON; no hay fallback silencioso a Simulator.
+
+La suite habitual `dotnet run --project backend/Carroza.Simulator.Tests` incluye Esp32Tests: transporte HTTP con handler controlado, serialización, respuestas/errores, DI, SHOW_FNE, cancelación, STOP ALL y API HTTP real con gateway alternativo. No requiere placa ni servicio externo. El servidor HTTP de prueba usa puerto efímero y se elimina al finalizar. Las comprobaciones temporales del simulador siguen en sus suites anteriores; el show del doble ESP32 usa delay controlado.
+
+Swagger documenta también errores de lectura/parada: 500/503/504 con el formato existente. No se agregan rutas públicas ni se renombra ningún DTO. Ante TIMEOUT de hardware, ejecución desconocida: se conserva último estado confirmado, sin reintento automático. No interpretar cancelación de secuencia como confirmación de parada física si la operación devolvió error.
+
+El frontend se conserva sin cambios. Los textos históricos SIMULATOR/SIMULADO son etiquetas estáticas de la demo, no detección del gateway ni telemetría; no deben usarse para identificar una placa al probar el modo ESP32. La integración física y su identificación visual quedan fuera del alcance actual.

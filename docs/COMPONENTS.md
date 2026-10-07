@@ -186,3 +186,7 @@ El identificador es main-light-bank y su type HTTP es light_bank, siguiendo la c
 ## Contrato implementado de posiciones (Iteración 4)
 
 hydraulic-1 usa type HYDRAULIC_ACTUATOR y devuelve position 0..100, movement STOPPED/EXTENDING/RETRACTING, limitExtended y limitRetracted. EXTEND/RETRACT/STOP no reciben parámetros. servo-1 usa type SERVO y SET_POSITION con position 0..180; inicial 90°. La parada conserva el ángulo del servo y congela la posición del hidráulico. Ver DESARROLLO.md para fallas reproducibles y respuesta opcional de STOP ALL.
+
+## Frontera ESP32 — Iteración 7
+
+Los mismos seis IDs, comandos y rangos se mantienen al seleccionar ESP32. El gateway representa estados recibidos del controlador; no ejecuta localmente efectos ni desplazamientos. online=false solo se publica si una consulta válida lo informa; fallo de comunicación produce error sin inventar una instantánea. STOP ALL requiere confirmación completa, preservando servo y posición hidráulica alcanzada. Contrato y límites físicos en [ESP32-PROTOCOL](ESP32-PROTOCOL.md).

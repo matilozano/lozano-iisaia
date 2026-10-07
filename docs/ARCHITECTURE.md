@@ -197,3 +197,13 @@ Frontend consulta estados, ejecución y eventos; no temporiza pasos. El catálog
 useDevices conserva la sincronización única de dispositivos, ejecución y eventos. App entrega el mismo estado al panel y CarrozaView; model.ts adapta datos sin efectos laterales. CarrozaSvg/Visuals y el HUD representan canales, velocidad, dirección y posiciones recibidas; CSS solo anima la presentación. No hay consultas ni temporización de SHOW_FNE dentro del Twin. Contrato y decisiones visuales en DESARROLLO; evidencia en ITERACION-6.
 
 Las secciones de iteraciones anteriores describen su contexto histórico. Para las reglas permanentes de cambios y cierre, consultar [AGENTS](../AGENTS.md) y [HARNESS](HARNESS.md).
+
+## Frontera ESP32 — Iteración 7
+
+Selección en Composition Root mediante AddComponentGateway: Simulator mantiene el gateway anterior; ESP32 registra Esp32ComponentGateway y un HttpEsp32Transport obtenido por HttpClientFactory. Endpoint/timeout provienen de configuración validada al arrancar. No se cambian Controllers, Application Services, IComponentGateway ni frontend para seleccionar implementación.
+
+Esp32ComponentGateway traduce modelos Domain a contratos wire independientes, verifica correlación/versión, estado completo y rangos de la respuesta, y devuelve únicamente estados confirmados. No almacena ni extrapola estado físico. IEsp32Transport permite sustituir comunicación por un doble controlado; HttpEsp32Transport solo serializa/intercambia JSON y traduce fallas de comunicación, sin reglas de componentes ni reintentos.
+
+ComponentExceptionFilter, registrado globalmente en MVC, cubre errores de consultas, STOP ALL y cancelación que antes no podían fallar por red. Conserva el formato público de error; GatewayErrorsOperationFilter documenta 500/503/504 en OpenAPI. Controllers permanecen sin dependencias concretas.
+
+El protocolo se define en [ESP32-PROTOCOL](ESP32-PROTOCOL.md). Las garantías de exclusión backend se conservan; la seguridad física, las solicitudes demoradas por red y la confirmación de parada de una placa desconectada no se pueden garantizar desde este cliente. Sin firmware ni hardware implementado en esta entrega.

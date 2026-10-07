@@ -10,7 +10,7 @@
 | [ARCHITECTURE](ARCHITECTURE.md) | Dependencias y responsabilidades de implementación |
 | [COMPONENTS](COMPONENTS.md) | Modelo conceptual y comportamiento; usar contrato HTTP real al construir requests |
 | [DESARROLLO](DESARROLLO.md) | Entorno, comandos reproducibles, contrato implementado y checklist visual |
-| [ESP32-PROTOCOL](ESP32-PROTOCOL.md) | Contrato futuro de hardware, todavía pendiente |
+| [ESP32-PROTOCOL](ESP32-PROTOCOL.md) | Contrato de la frontera ESP32; distinguir implementación software de verificación física |
 | ITERACION-N.md | Registro histórico de alcance, cambios y evidencia de cada ejecución |
 | [README](../README.md) | Visión general; sus etapas conceptuales no asignan números a iteraciones aprobadas |
 

@@ -133,10 +133,10 @@ Infrastructure/
 
 `SimulatorComponentGateway` mantiene el estado virtual.
 
-Cuando se implemente, `Esp32ComponentGateway` traducirá los comandos al protocolo definido en
+`Esp32ComponentGateway` traduce los comandos al protocolo definido en
 `docs/ESP32-PROTOCOL.md`.
 
-El gateway futuro deberá implementar el mismo contrato. No crear un placeholder ni firmware para satisfacer este ejemplo.
+Ambos gateways implementan el mismo contrato. La frontera ESP32 tiene pruebas sin placa; no crear firmware o lógica paralela sin alcance aprobado.
 
 ## Modelo de componentes
 

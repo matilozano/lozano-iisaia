@@ -47,3 +47,9 @@ Console.WriteLine($"OK: {checks} verificaciones del simulador y servicio; 60 ope
 await LightBankTests.Run();
 await PositionAndFaultTests.Run();
 await SequenceTests.Run();
+try { await Esp32Tests.Run(); }
+catch (Exception error)
+{
+    Console.Error.WriteLine(error);
+    Environment.ExitCode = 1;
+}

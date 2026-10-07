@@ -17,7 +17,7 @@ Antes de cambios relevantes, leer:
 - [docs/HARNESS.md](docs/HARNESS.md): flujo de trabajo, evidencia y formato de cierre.
 - AGENTS de las áreas afectadas: [backend](backend/AGENTS.md), [frontend](frontend/AGENTS.md), y cualquier instrucción más específica existente.
 
-Consultar [docs/ESP32-PROTOCOL.md](docs/ESP32-PROTOCOL.md) cuando se afecte el gateway o su contrato; está pendiente y no autoriza implementar hardware. Leer los informes `docs/ITERACION-N.md` relevantes para el cambio o la continuación. No es necesario releer todos para una modificación local cuya historia ya está cubierta por el Harness.
+Consultar [docs/ESP32-PROTOCOL.md](docs/ESP32-PROTOCOL.md) cuando se afecte el gateway o su contrato; define la frontera de Iteración 7 y no autoriza por sí solo implementar firmware/hardware. Leer los informes `docs/ITERACION-N.md` relevantes para el cambio o la continuación. No es necesario releer todos para una modificación local cuya historia ya está cubierta por el Harness.
 
 Las instrucciones explícitas del usuario gobiernan la tarea. Ante contradicciones entre documentación y código, identificar la diferencia y preservar contratos hasta resolverla; no modificar código solo para satisfacer un ejemplo histórico. Los informes registran evidencia de una ejecución, no sustituyen nuevas verificaciones.
 
@@ -41,7 +41,7 @@ Frontend React → HTTP → Controllers → Application Services → IComponentG
 - Controllers traducen HTTP/DTOs y delegan; no dependen de gateways concretos ni manejan estado del simulador.
 - Domain contiene modelos/reglas; Application coordina casos de uso mediante abstracciones; Infrastructure implementa el gateway y la simulación.
 - Frontend no conoce GPIO, relés, drivers, protocolo interno ni direcciones del ESP32; nunca se conecta directamente a hardware.
-- `SimulatorComponentGateway` es el gateway implementado. `Esp32ComponentGateway` es una evolución futura, no una clase obligatoria a crear hoy. Selección por configuración/DI.
+- `SimulatorComponentGateway` y `Esp32ComponentGateway` son implementaciones seleccionables por configuración/DI. La frontera ESP32 se prueba sin hardware; no implica firmware ni integración física terminados.
 - Mantener componentes y comandos genéricos, compatibles con luces, banco, motor, hidráulico y servo. Conservar `/api/devices` y sus contratos; cualquier extensión indispensable debe justificarse, documentarse y probar compatibilidad.
 
 ## Estado confirmado, secuencias y seguridad

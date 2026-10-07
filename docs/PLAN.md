@@ -50,13 +50,190 @@ Implementados hydraulic-1 (HYDRAULIC_ACTUATOR), servo-1 (SERVO) y fallas reprodu
 
 ## Iteración 6 — Vista Carroza / Digital Twin
 
-SVG propio del chasis, ruedas, iluminación, plataforma hidráulica y pieza servo. Comparte devices/execution/connected de useDevices con el panel; no incorpora consultas, comandos ni temporización de secuencias. El mapping de presentación y los componentes SVG están separados en frontend/src/carroza. Los contratos HTTP y puertos se conservan. Detalle y verificaciones en ITERACION-6.md. La Iteración 7 no se implementa.
+SVG propio del chasis, ruedas, iluminación, plataforma hidráulica y pieza servo. Comparte devices/execution/connected de useDevices con el panel; no incorpora consultas, comandos ni temporización de secuencias. El mapping de presentación y los componentes SVG están separados en frontend/src/carroza. Los contratos HTTP y puertos se conservan. Detalle y verificaciones en ITERACION-6.md. La Iteración 7 no se implementó dentro del alcance de Iteración 6.
 
 
 Verificación de cierre de Iteración 6 repetida el 2026-10-06: builds, suites y regresión HTTP aprobados; revisión visual de controles, show y parada realizada. Pendiente la activación manual de movimiento reducido; cobertura CSS/automatizada aprobada. Ver ITERACION-6.md.
 
 ## Estado actual del Harness
 
-Las iteraciones 1–6 están cerradas; sus reportes preservan resultados y pendientes específicos. No existe alcance aprobado para Iteración 7. Las etapas conceptuales del README y las fases futuras de arquitectura no definen una próxima iteración.
+Las iteraciones 1–6 están cerradas; sus reportes preservan resultados y pendientes específicos. El alcance de Iteración 7 fue aprobado posteriormente y se define a continuación. Las etapas conceptuales del README y las fases futuras de arquitectura no definen una próxima iteración.
 
 Las reglas comunes de ejecución se consolidan en [AGENTS](../AGENTS.md), los AGENTS por área y [HARNESS](HARNESS.md). Este refinamiento documental no agrega una iteración funcional. El pendiente de revisión manual de movimiento reducido de Iteración 6 conserva su condición; esta tarea documental no lo declara resuelto.
+
+## Iteración 7 — Gateway ESP32 y frontera de hardware
+
+### Objetivo
+
+Preparar la integración del sistema con un controlador ESP32 real,
+demostrando que la arquitectura permite reemplazar el simulador mediante
+otra implementación de `IComponentGateway` sin modificar Controllers,
+Application Services ni frontend.
+
+La Iteración 7 define e implementa la frontera de comunicación con ESP32,
+pero no requiere todavía disponer del hardware físico.
+
+### Alcance
+
+- Implementar `Esp32ComponentGateway` como nueva implementación de
+  `IComponentGateway`.
+
+- Mantener `SimulatorComponentGateway` disponible.
+
+- Permitir seleccionar el gateway mediante configuración de la aplicación,
+  sin modificar código:
+
+  - `Simulator`
+  - `ESP32`
+
+- Utilizar `docs/ESP32-PROTOCOL.md` como contrato de comunicación.
+
+- Implementar un cliente/transporte desacoplado para la comunicación con
+  ESP32.
+
+- Separar claramente:
+
+  Application
+      ↓
+  IComponentGateway
+      ↓
+  Esp32ComponentGateway
+      ↓
+  transporte ESP32
+
+- El transporte debe poder sustituirse por una implementación simulada
+  durante las pruebas.
+
+- Traducir los comandos existentes del dominio al protocolo ESP32.
+
+- Traducir las respuestas del ESP32 al estado utilizado actualmente por
+  la aplicación.
+
+- Mantener los identificadores y comportamientos existentes de los
+  componentes.
+
+### Configuración
+
+La selección del gateway debe realizarse mediante configuración.
+
+Ejemplo conceptual:
+
+ComponentGateway:
+  Mode: Simulator
+
+o:
+
+ComponentGateway:
+  Mode: ESP32
+
+La dirección/endpoint del ESP32 también debe provenir de configuración.
+
+No hardcodear direcciones del dispositivo en Controllers, Services o
+Gateway.
+
+### Compatibilidad
+
+Al utilizar:
+
+Mode = Simulator
+
+el sistema debe conservar el comportamiento existente de las Iteraciones
+1–6.
+
+El frontend no debe conocer qué gateway está activo.
+
+Los Controllers tampoco deben seleccionar ni conocer la implementación
+concreta.
+
+### Comunicación
+
+La comunicación con ESP32 debe respetar el contrato definido en
+`docs/ESP32-PROTOCOL.md`.
+
+Errores de transporte deben convertirse en errores coherentes con el
+modelo existente, incluyendo cuando corresponda:
+
+- DEVICE_OFFLINE
+- TIMEOUT
+- INVALID_COMMAND
+- INVALID_PARAMETER
+- INTERNAL_ERROR
+
+No duplicar reglas de negocio dentro del transporte.
+
+### Pruebas
+
+Agregar pruebas que permitan verificar el gateway ESP32 sin hardware real.
+
+Utilizar un transporte controlado/falso para comprobar como mínimo:
+
+- envío correcto de comandos;
+- serialización conforme al protocolo;
+- interpretación de respuestas;
+- actualización de estados;
+- timeout;
+- dispositivo offline;
+- respuesta inválida;
+- error interno;
+- STOP ALL;
+- ejecución de comandos utilizados por SHOW_FNE.
+
+Verificar además que el modo Simulator continúa funcionando sin regresiones.
+
+### Verificación arquitectónica
+
+Demostrar que cambiar entre:
+
+SimulatorComponentGateway
+
+y:
+
+Esp32ComponentGateway
+
+no requiere modificar:
+
+- Controllers;
+- Application Services;
+- frontend.
+
+La selección debe resolverse en el Composition Root/configuración.
+
+### Documentación
+
+Crear:
+
+`docs/ITERACION-7.md`
+
+Documentar:
+
+- arquitectura implementada;
+- configuración del gateway;
+- flujo de un comando;
+- relación con `ESP32-PROTOCOL.md`;
+- estrategia de pruebas sin hardware;
+- verificaciones realizadas;
+- limitaciones reales.
+
+Actualizar `ARCHITECTURE.md`, `COMPONENTS.md`, `DESARROLLO.md` y
+`ESP32-PROTOCOL.md` solamente cuando la implementación requiera reflejar
+cambios reales.
+
+### Fuera de alcance
+
+Esta iteración NO incluye:
+
+- firmware definitivo del ESP32;
+- conexión obligatoria con hardware físico;
+- asignación definitiva de GPIO;
+- cableado eléctrico;
+- drivers de potencia;
+- MQTT;
+- SignalR/WebSockets;
+- base de datos;
+- autenticación;
+- cambios visuales del Digital Twin;
+- nuevas funcionalidades de la carroza.
+
+La integración física se realizará en una iteración posterior.
+
+Estado de implementación de Iteración 7 (2026-10-07): frontera software implementada y pruebas automatizadas aprobadas, incluyendo regresión Simulator y transporte controlado ESP32. Revisión interactiva de Swagger pendiente por falla del navegador; hardware/firmware fuera de alcance. Resultados y limitaciones del entorno en [ITERACION-7](ITERACION-7.md).

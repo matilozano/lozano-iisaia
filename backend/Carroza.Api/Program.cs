@@ -1,10 +1,12 @@
 using Carroza.Api.Application;
 using Carroza.Api.Application.Services;
 using Carroza.Api.Domain.Components;
-using Carroza.Api.Infrastructure.Gateways;
+using Carroza.Api.Infrastructure.Esp32;
+using Carroza.Api.Infrastructure.Http;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddControllers().ConfigureApiBehaviorOptions(options => options.SuppressMapClientErrors = true);
+builder.Services.AddControllers(options => options.Filters.Add<ComponentExceptionFilter>())
+    .ConfigureApiBehaviorOptions(options => options.SuppressMapClientErrors = true);
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new Microsoft.OpenApi.OpenApiInfo
@@ -13,26 +15,17 @@ builder.Services.AddSwaggerGen(options =>
         Description = "API de componentes simulados y secuencias coordinadas. Consulte estados y pruebe comandos o SHOW_FNE. STOP ALL cancela secuencias, apaga iluminación y detiene motor y actuador; conserva el ángulo del servo."
     });
     options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, "Carroza.Api.xml"));
+    options.OperationFilter<GatewayErrorsOperationFilter>();
 });
 builder.Services.AddSingleton<ComponentCatalog>();
 builder.Services.AddSingleton(TimeProvider.System);
-builder.Services.AddSingleton(new SimulatorFaultPlan(
-    builder.Configuration.GetSection("Simulator:Faults").Get<Dictionary<string, string>>()));
 builder.Services.AddSingleton<OperationCoordinator>();
 builder.Services.AddSingleton<ComponentCommandExecutor>();
 builder.Services.AddSingleton<IComponentService, ComponentService>();
 builder.Services.AddSingleton<Carroza.Api.Domain.Sequences.SequenceCatalog>();
 builder.Services.AddSingleton<ISequenceService, SequenceService>();
 builder.Services.AddHostedService<Carroza.Api.Infrastructure.Lifecycle.SequenceLifetime>();
-var mode = builder.Configuration["ComponentGateway:Mode"] ?? "Simulator";
-switch (mode)
-{
-    case "Simulator":
-        builder.Services.AddSingleton<IComponentGateway, SimulatorComponentGateway>();
-        break;
-    default:
-        throw new InvalidOperationException($"Gateway '{mode}' no implementado en la Iteración 1.");
-}
+builder.Services.AddComponentGateway(builder.Configuration);
 var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
