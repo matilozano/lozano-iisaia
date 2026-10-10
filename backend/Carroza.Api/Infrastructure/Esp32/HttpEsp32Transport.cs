@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Text;
 using Carroza.Api.Domain.Commands;
 
 namespace Carroza.Api.Infrastructure.Esp32;
@@ -13,7 +14,9 @@ public sealed class HttpEsp32Transport(HttpClient client, Esp32Options options) 
         timeout.CancelAfter(options.TimeoutMs);
         try
         {
-            using var response = await client.PostAsJsonAsync(options.Endpoint, request, Esp32Json.Options, timeout.Token);
+            // A bounded body with Content-Length keeps the MCU HTTP parser small.
+            using var content = new StringContent(JsonSerializer.Serialize(request, Esp32Json.Options), Encoding.UTF8, "application/json");
+            using var response = await client.PostAsync(options.Endpoint, content, timeout.Token);
             if (!response.IsSuccessStatusCode)
                 throw Failure(response.StatusCode switch
                 {

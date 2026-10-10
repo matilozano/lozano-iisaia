@@ -6,3 +6,7 @@
 .vs/
 .env
 frontend/.test-build/
+**/__pycache__/
+firmware/esp32-carroza/.tools/
+firmware/esp32-carroza/build/
+firmware/esp32-carroza/src/config_local.py

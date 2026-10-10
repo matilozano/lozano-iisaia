@@ -13,7 +13,10 @@ public sealed class Esp32ComponentGateway(ComponentCatalog catalog, IEsp32Transp
     public async Task<ComponentResult> ExecuteAsync(string id, ComponentCommand command, CancellationToken cancellationToken)
     {
         var wire = new Esp32Command(command.Action!, command.Direction, command.Speed, command.Position);
-        var response = await ExchangeAsync("EXECUTE", id, wire, cancellationToken);
+        // Read the controller's current stop epoch for this new intention. Never retry
+        // EXECUTE with a refreshed token: that would resurrect an obsolete command.
+        var admission = await ExchangeAsync("GET_STATE", id, null, cancellationToken);
+        var response = await ExchangeAsync("EXECUTE", id, wire, cancellationToken, admission.Token);
         if (!response.States[0].Online) throw new ComponentOperationException("DEVICE_OFFLINE", $"{id}: controlador reportó offline.");
         return new(id, true, response.States[0], response.Time);
     }
@@ -23,10 +26,10 @@ public sealed class Esp32ComponentGateway(ComponentCatalog catalog, IEsp32Transp
 
     public async Task StopAllAsync(CancellationToken cancellationToken) => await StopAllAndGetStatesAsync(cancellationToken);
 
-    private async Task<(ComponentState[] States, DateTimeOffset Time)> ExchangeAsync(
-        string operation, string? id, Esp32Command? command, CancellationToken ct)
+    private async Task<(ComponentState[] States, DateTimeOffset Time, string? Token)> ExchangeAsync(
+        string operation, string? id, Esp32Command? command, CancellationToken ct, string? token = null)
     {
-        var request = new Esp32Request(1, Guid.NewGuid(), operation, id, command);
+        var request = new Esp32Request(1, Guid.NewGuid(), operation, id, command, token);
         Esp32Response response;
         try { response = await transport.ExchangeAsync(request, ct); }
         catch (ComponentOperationException error) { throw new ComponentOperationException(error.Code, $"{id ?? "STOP_ALL"}: {error.Code}: {error.Message}"); }
@@ -47,7 +50,9 @@ public sealed class Esp32ComponentGateway(ComponentCatalog catalog, IEsp32Transp
         if (operation == "STOP_ALL" && states.Any(s => !s.Online || s.State is not ("off" or "stopped") ||
             s.Speed != 0 || s.Channels?.Any(on => on) == true || s.Effect is not (null or "NONE") ||
             s.Movement is not (null or "STOPPED"))) throw Invalid(id);
-        return (states, response.ExecutedAt.Value.ToUniversalTime());
+        if (response.ControlToken is { } receivedToken &&
+            (receivedToken.Length != 32 || receivedToken.Any(c => !Uri.IsHexDigit(c)))) throw Invalid(id);
+        return (states, response.ExecutedAt.Value.ToUniversalTime(), response.ControlToken);
     }
 
     // Validate the untrusted wire snapshot before presenting any of it as confirmed.

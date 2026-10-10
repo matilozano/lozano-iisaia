@@ -207,3 +207,17 @@ Esp32ComponentGateway traduce modelos Domain a contratos wire independientes, ve
 ComponentExceptionFilter, registrado globalmente en MVC, cubre errores de consultas, STOP ALL y cancelación que antes no podían fallar por red. Conserva el formato público de error; GatewayErrorsOperationFilter documenta 500/503/504 en OpenAPI. Controllers permanecen sin dependencias concretas.
 
 El protocolo se define en [ESP32-PROTOCOL](ESP32-PROTOCOL.md). Las garantías de exclusión backend se conservan; la seguridad física, las solicitudes demoradas por red y la confirmación de parada de una placa desconectada no se pueden garantizar desde este cliente. Sin firmware ni hardware implementado en esta entrega.
+
+## Firmware independiente — Iteración 8
+
+`firmware/esp32-carroza` implementa HTTP → parser de protocolo → dispatcher →
+controladores genéricos → HAL. No importa ASP.NET ni ejecuta SHOW_FNE. La HAL
+simulada permite ejecutar el mismo núcleo en CPython; la HAL ESP32 encapsula
+machine.Pin/PWM/ADC y recibe configuración explícita. No hay GPIO en Controllers,
+Application ni frontend. El backend solo extiende Infrastructure para transmitir
+la barrera controlToken y Content-Length; las abstracciones públicas se conservan.
+
+El dispatcher serializa mutaciones síncronas en un event loop, mantiene snapshots
+y aplica watchdog/barrera antes de comandos. Las garantías y límites están en
+[ESP32-PROTOCOL](ESP32-PROTOCOL.md); despliegue y pruebas en el
+[README del firmware](../firmware/esp32-carroza/README.md).

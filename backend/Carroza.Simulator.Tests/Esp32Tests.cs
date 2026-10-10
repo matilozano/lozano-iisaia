@@ -135,6 +135,18 @@ internal static class Esp32Tests
         controller.Hang = false;
         Check((await gateway.GetStateAsync("servo-1", default)).Position == 180, "Timeout/cancelación sin confirmación falsa");
 
+        controller.Transform = r => r with { ControlToken = "0123456789abcdef0123456789abcdef" };
+        await gateway.ExecuteAsync("servo-1", new("SET_POSITION", Position: 180), default);
+        Check(controller.Requests.Last().ControlToken == "0123456789abcdef0123456789abcdef", "EXECUTE lleva epoch consultado");
+        controller.RejectExecute = true;
+        count = controller.Requests.Count;
+        await Error("TIMEOUT", () => gateway.ExecuteAsync("servo-1", new("SET_POSITION", Position: 0), default));
+        Check(controller.Requests.Count == count + 2, "Preflight + EXECUTE obsoleto, sin renovar ni reintentar");
+        controller.RejectExecute = false;
+        controller.Transform = r => r with { ControlToken = "invalid" };
+        await Error("INTERNAL_ERROR", () => gateway.ExecuteAsync("servo-1", new("SET_POSITION", Position: 0), default));
+        controller.Transform = null;
+
         // Same Application services with the alternate gateway; no duplicate sequence engine.
         var operations = new OperationCoordinator();
         var sequence = new SequenceService(new(), new(catalog, gateway), gateway, operations, TimeProvider.System, new ImmediateDelay());
@@ -230,19 +242,20 @@ internal static class Esp32Tests
         public string? Code, Raw;
         public string MediaType = "application/json";
         public int Status = 200;
-        public bool Offline, Hang;
+        public bool Offline, Hang, RejectExecute;
         public Func<Esp32Response, Esp32Response>? Transform;
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage message, CancellationToken ct)
         {
             if (message.Method != HttpMethod.Post || message.RequestUri!.AbsoluteUri != "http://controller.test/v1/exchange") throw new Exception("Endpoint/método incorrecto");
             var body = await message.Content!.ReadAsStringAsync(ct);
+            if (message.Content.Headers.ContentLength != Encoding.UTF8.GetByteCount(body)) throw new Exception("Falta Content-Length de firmware");
             Bodies.Add(body);
             var request = JsonSerializer.Deserialize<Esp32Request>(body, Esp32Json.Options)!;
             Requests.Add(request);
             if (Offline) throw new HttpRequestException("offline");
             if (Hang) await Task.Delay(Timeout.Infinite, ct);
             Esp32Response response;
-            if (Code is not null) response = new(1, request.RequestId, false, null, null, new(Code, "Falla controlada"));
+            if (Code is not null || (RejectExecute && request.Operation == "EXECUTE")) response = new(1, request.RequestId, false, null, null, new(Code ?? "TIMEOUT", "Falla controlada"));
             else
             {
                 var states = request.Operation switch

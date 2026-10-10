@@ -1,4 +1,16 @@
-# Desarrollo local — Iteración 6
+# Desarrollo local
+
+## Firmware — Iteración 8
+
+Instalación, compilación MicroPython, tests y arranque del controlador HTTP local:
+[README del firmware](../firmware/esp32-carroza/README.md).
+Agregar al cierre las pruebas `python -m unittest discover -s firmware/esp32-carroza/tests -v`,
+`python firmware/esp32-carroza/build.py` y `./firmware/esp32-carroza/integration-test.ps1`.
+El último requiere host.py en 5090 y API en modo ESP32 en 5080; ejecutar luego
+frontend-proxy-test con Vite en 5173. Reiniciar la API en Simulator para ejecutar
+la regresión habitual completa, incluido fault-test. Nunca ejecutar ambas baterías
+HTTP en paralelo. Resultados reales: [ITERACION-8](ITERACION-8.md).
+La compilación de bytecode y las pruebas con HAL simulada no validan hardware físico.
 
 Requisitos: SDK .NET 9, Node.js 22 con npm y PowerShell 7 para los scripts de prueba.
 

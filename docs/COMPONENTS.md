@@ -190,3 +190,13 @@ hydraulic-1 usa type HYDRAULIC_ACTUATOR y devuelve position 0..100, movement STO
 ## Frontera ESP32 — Iteración 7
 
 Los mismos seis IDs, comandos y rangos se mantienen al seleccionar ESP32. El gateway representa estados recibidos del controlador; no ejecuta localmente efectos ni desplazamientos. online=false solo se publica si una consulta válida lo informa; fallo de comunicación produce error sin inventar una instantánea. STOP ALL requiere confirmación completa, preservando servo y posición hidráulica alcanzada. Contrato y límites físicos en [ESP32-PROTOCOL](ESP32-PROTOCOL.md).
+
+## Implementación del controlador — Iteración 8
+
+El firmware implementa los mismos seis IDs y comandos del contrato HTTP vigente.
+La HAL simulada calcula hidráulico a 20 puntos porcentuales por segundo; la HAL
+ESP32 obtiene su posición de ADC calibrado. Motor y servo confirman salidas/consignas,
+no posición mecánica medida. STOP_ALL apaga luces/banco, cancela efectos, detiene
+motor e hidráulico y conserva servo. No introduce un nuevo ángulo seguro.
+La configuración de pines y pulsos no define electrónica definitiva. Consulte
+[firmware](../firmware/esp32-carroza/README.md) y [protocolo](ESP32-PROTOCOL.md).
