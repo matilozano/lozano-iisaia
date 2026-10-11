@@ -20,6 +20,8 @@ builder.Services.AddSwaggerGen(options =>
 builder.Services.AddSingleton<ComponentCatalog>();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<OperationCoordinator>();
+builder.Services.AddSingleton<ITelemetryService, TelemetryService>();
+builder.Services.AddHostedService<Carroza.Api.Infrastructure.Lifecycle.TelemetryMonitor>();
 builder.Services.AddSingleton<ComponentCommandExecutor>();
 builder.Services.AddSingleton<IComponentService, ComponentService>();
 builder.Services.AddSingleton<Carroza.Api.Domain.Sequences.SequenceCatalog>();

@@ -221,3 +221,19 @@ El dispatcher serializa mutaciones síncronas en un event loop, mantiene snapsho
 y aplica watchdog/barrera antes de comandos. Las garantías y límites están en
 [ESP32-PROTOCOL](ESP32-PROTOCOL.md); despliegue y pruebas en el
 [README del firmware](../firmware/esp32-carroza/README.md).
+
+## Supervisión — Iteración 9
+
+TelemetryController mapea DTOs y delega en ITelemetryService. El servicio coordina
+protecciones con OperationCoordinator; TelemetryMonitor solo hospeda su supervisión
+periódica. Los registros viven en Domain, sin ASP.NET. IComponentGateway se amplía
+con telemetría/control de simulación y conserva las operaciones anteriores.
+Simulator mantiene muestras/fallas bajo su bloqueo; Esp32 traduce/valida el contrato
+remoto. El firmware aplica su protección antes de despachar comandos a la HAL.
+Ninguna regla de protección depende de React. Application conserva SHOW_FNE y la
+cancelación; el frontend presenta las muestras confirmadas y las advertencias.
+
+App compone Twin, TelemetryPanel, DevicePanel, Sequences y CommandHistory. useDevices
+usa pollSnapshot para resolver cada respuesta por separado, conservando datos ante
+fallas sin crear polling adicional. Las fallas de transporte pueden generar alerta
+local de Application, diferenciada de la inyección controlada del simulador.

@@ -13,7 +13,7 @@ function CarrozaHud({ model }: { model: CarrozaModel }) {
 export function CarrozaView({ devices, connected, execution }: { devices: readonly Device[]; connected: boolean | null; execution: SequenceExecution | null }) {
   const model = toCarrozaModel(devices, connected, execution);
   return <section className="carroza-view" aria-label="Vista carroza">
-    <div className="twin-heading"><div><p className="eyebrow">FNE · DIGITAL TWIN</p><h2>VISTA CARROZA</h2></div><span>Estado confirmado · Sin hardware</span></div>
+    <div className="twin-heading"><div><p className="eyebrow">FNE · DIGITAL TWIN</p><h2>VISTA CARROZA</h2></div><span>Estado confirmado por API</span></div>
     {model.stale && <p className="twin-notice">{connected === null ? 'Esperando estado de la API.' : 'API OFFLINE: último estado confirmado; la representación no confirma movimiento actual.'}</p>}
     {model.offline.length > 0 && <p className="twin-notice">Componentes OFFLINE: {model.offline.join(', ')}</p>}
     <CarrozaSvg model={model} /><CarrozaHud model={model} />

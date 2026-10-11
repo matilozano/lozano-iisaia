@@ -9,6 +9,16 @@ public sealed class OperationCoordinator
     private long generation;
     private int stops;
     private CancellationTokenSource? active;
+    private bool protection;
+    public void SetProtection(bool blocked)
+    {
+        lock (sync)
+        {
+            if (protection != blocked) generation++;
+            protection = blocked;
+            if (blocked) { generation++; active?.Cancel(); }
+        }
+    }
 
     public async Task<T> ManualAsync<T>(Func<Task<T>> action, CancellationToken ct)
     {
@@ -18,7 +28,7 @@ public sealed class OperationCoordinator
         try
         {
             lock (sync)
-                if (version != generation || stops > 0 || active is not null)
+                if (protection || version != generation || stops > 0 || active is not null)
                     throw new ComponentOperationException("OPERATION_CONFLICT", "Secuencia activa o parada en curso; comando manual rechazado.");
             return await action();
         }
@@ -29,7 +39,7 @@ public sealed class OperationCoordinator
     {
         lock (sync)
         {
-            if (stops > 0) throw new ComponentOperationException("OPERATION_CONFLICT", "Parada en curso.");
+            if (protection || stops > 0) throw new ComponentOperationException("OPERATION_CONFLICT", "Protección activa o parada en curso.");
             return active = new CancellationTokenSource();
         }
     }

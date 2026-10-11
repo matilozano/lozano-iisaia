@@ -1,3 +1,5 @@
+import type { Telemetry, TelemetryAction } from './Telemetry';
+import { pollSnapshot } from './pollSnapshot';
 import type { SequenceExecution, SequenceEvent } from './Sequences';
 import { useEffect, useRef, useState } from 'react';
 import { ApiError, request, type Command, type CommandResult, type Device } from './api';
@@ -5,6 +7,9 @@ import { ApiError, request, type Command, type CommandResult, type Device } from
 export interface HistoryEntry { origin: 'MANUAL' | 'SEQUENCE'; timestamp: number; time: string; component: string; command: string; result: string }
 
 export function useDevices() {
+  const [telemetry, setTelemetry] = useState<Telemetry | null>(null);
+  const [telemetryError, setTelemetryError] = useState('');
+  const [telemetryPending, setTelemetryPending] = useState(false);
   const [devices, setDevices] = useState<Device[]>([]);
   const [connected, setConnected] = useState<boolean | null>(null);
   const [error, setError] = useState('');
@@ -52,13 +57,17 @@ export function useDevices() {
     async function poll() {
       if (!busy.current && !stopping.current) {
         const version = generation.current;
-        try {
-          const [states, current, events] = await Promise.all([request<Device[]>('devices'), request<SequenceExecution>('sequences/execution'), request<SequenceEvent[]>('sequences/events')]);
-          if (!disposed && version === generation.current) { setDevices(states); applySequence(current, events); setConnected(true); setConnectionError(''); }
-        } catch (e) {
-          if (!disposed && version === generation.current) { setConnected(false); setConnectionError(e instanceof Error ? e.message : String(e)); }
-        }
-      }
+        const snapshot = await pollSnapshot(request);
+        if (!disposed && version === generation.current) {
+          if (snapshot.devices.status === 'fulfilled') {
+            setDevices(snapshot.devices.value); setConnectionError('');
+          } else setConnectionError(String(snapshot.devices.reason instanceof Error ? snapshot.devices.reason.message : snapshot.devices.reason));
+          // An answering telemetry endpoint proves API availability even when controller reads fail.
+          setConnected(snapshot.devices.status === 'fulfilled' || snapshot.telemetry.status === 'fulfilled');
+          if (snapshot.execution.status === 'fulfilled') applySequence(snapshot.execution.value, snapshot.events.status === 'fulfilled' ? snapshot.events.value : []);
+          if (snapshot.telemetry.status === 'fulfilled') { setTelemetry(snapshot.telemetry.value); setTelemetryError(''); }
+          else setTelemetryError(snapshot.telemetry.reason instanceof Error ? snapshot.telemetry.reason.message : String(snapshot.telemetry.reason));
+        }      }
       if (!disposed) timer = setTimeout(poll, 150);
     }
     void poll();
@@ -104,5 +113,16 @@ export function useDevices() {
     } catch (e) { record('TODOS', 'STOP ALL', 'ERROR'); setError(e instanceof Error ? e.message : String(e)); }
     finally { stopping.current = false; setPending(''); }
   }
-  return { execution, sequencePending, sequenceError, startSequence: () => sequenceAction('SHOW_FNE/start'), cancelSequence: () => sequenceAction('cancel'), devices, connected, error: error || connectionError, pending, confirmation, history, componentErrors, send, stopAll };
+  async function telemetryAction(action: TelemetryAction) {
+    if (busy.current || stopping.current || !telemetry?.canInjectFaults) return;
+    busy.current = true; const version = ++generation.current;
+    setTelemetryPending(true); setTelemetryError('');
+    try {
+      const result = await request<Telemetry>('telemetry/simulation', action);
+      if (version === generation.current) setTelemetry(result);
+      record('PROTECCIÓN', [action.action, action.code, action.active === undefined ? '' : String(action.active)].filter(Boolean).join(' '), 'OK');
+    } catch (e) { if (version === generation.current) setTelemetryError(e instanceof Error ? e.message : String(e)); record('PROTECCIÓN', action.action, 'ERROR'); }
+    finally { busy.current = false; setTelemetryPending(false); }
+  }
+  return { telemetry, telemetryError, telemetryPending, telemetryAction, execution, sequencePending, sequenceError, startSequence: () => sequenceAction('SHOW_FNE/start'), cancelSequence: () => sequenceAction('cancel'), devices, connected, error: error || connectionError, pending, confirmation, history, componentErrors, send, stopAll };
 }

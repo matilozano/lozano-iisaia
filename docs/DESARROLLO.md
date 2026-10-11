@@ -213,3 +213,50 @@ La suite habitual `dotnet run --project backend/Carroza.Simulator.Tests` incluye
 Swagger documenta también errores de lectura/parada: 500/503/504 con el formato existente. No se agregan rutas públicas ni se renombra ningún DTO. Ante TIMEOUT de hardware, ejecución desconocida: se conserva último estado confirmado, sin reintento automático. No interpretar cancelación de secuencia como confirmación de parada física si la operación devolvió error.
 
 El frontend se conserva sin cambios. Los textos históricos SIMULATOR/SIMULADO son etiquetas estáticas de la demo, no detección del gateway ni telemetría; no deben usarse para identificar una placa al probar el modo ESP32. La integración física y su identificación visual quedan fuera del alcance actual.
+
+## Dashboard y supervisión — Iteración 9
+
+El dashboard ahora obtiene el gateway real de `GET /api/telemetry`; reemplaza las
+etiquetas estáticas descritas en el contexto histórico anterior. Mantiene un solo
+polling frontend, con resultados independientes de dispositivos, secuencia y
+telemetría. STOP ALL tiene una fila persistente fuera del contenido desplazable.
+
+Telemetría: `gateway`, `source` (SIMULATED/UNAVAILABLE), `online`, `sampledAt` UTC,
+`ageMs`, `quality` (VALID/STALE/INVALID/OFFLINE/UNAVAILABLE), `voltage` V, `current` A,
+`temperature` °C, `motorSpeed` %, `protectionLatched`, `stopConfirmed`,
+`canInjectFaults`, `alerts` con code/active/acknowledged/activatedAt/resolvedAt.
+Null no equivale a cero. Una consulta puede devolver 200 con calidad OFFLINE y
+últimos valores: la API responde, pero el controlador no confirma su estado actual.
+
+En Simulator y firmware/HAL simulada, para velocidad confirmada s=0..100:
+V=24−0.01s, A=1+0.08s, °C=25+0.3s. Es un modelo determinista de demostración, sin
+sensores físicos ni calibración. Cada consulta actualiza la muestra salvo lectura
+obsoleta inyectada; STALE fuerza ageMs≥5000 para probar la advertencia.
+
+POST `/api/telemetry/simulation` permite SET_FAULT (code y active obligatorios),
+ACKNOWLEDGE (code opcional) y RESET (sin parámetros). Códigos:
+OVER_TEMPERATURE=85 °C, OVER_CURRENT=15 A, VOLTAGE_RANGE=16 V,
+COMMUNICATION_LOSS=OFFLINE, INVALID_SENSOR=null/INVALID, STALE_SENSOR=STALE.
+Todas son condiciones críticas discretas: paran y enclavan. Retirar una causa
+con active=false no rearma. Reconocer tampoco; RESET exige todas resueltas y
+reconocidas, con parada confirmada. No se reanuda ninguna secuencia o movimiento.
+Fuera de HAL simulada, la inyección se rechaza en el controlador.
+
+El supervisor backend se ejecuta cada 250 ms sin depender del navegador. Ante
+pérdida real de transporte intenta STOP ALL y cancela/bloquea operaciones, pero
+no confirma parada física si falla la comunicación. La recuperación requiere
+reconocimiento y restablecimiento. Los comandos bloqueados devuelven conflicto
+409 en la coordinación backend; los parámetros de recuperación inválidos, 400.
+
+Agregar al cierre de ambos modos, después de la regresión y sin operar el panel:
+
+```powershell
+./backend/telemetry-test.ps1
+```
+
+Repetir en Simulator y en ESP32 → host.py/HAL simulada según README de firmware.
+El script verifica ambos endpoints nuevos en OpenAPI, las seis fallas, parada,
+cancelación, bloqueo, reconocimiento/reset y ausencia de reactivación. Para revisión
+visual: escritorio y móvil sin overflow, STOP accesible, métricas al variar motor,
+laboratorio de fallas, alertas activas/reconocidas/resueltas, recuperación y pérdida
+de comunicación conservando la última lectura. Resultados: [ITERACION-9](ITERACION-9.md).

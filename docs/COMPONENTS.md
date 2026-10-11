@@ -200,3 +200,13 @@ no posición mecánica medida. STOP_ALL apaga luces/banco, cancela efectos, deti
 motor e hidráulico y conserva servo. No introduce un nuevo ángulo seguro.
 La configuración de pines y pulsos no define electrónica definitiva. Consulte
 [firmware](../firmware/esp32-carroza/README.md) y [protocolo](ESP32-PROTOCOL.md).
+
+## Protecciones simuladas — Iteración 9
+
+La supervisión es global; no se agregan componentes físicos ni se alteran IDs.
+Las seis fallas críticas de telemetría aplican la parada existente a todos los
+componentes, conservan servo y bloquean nuevas intenciones hasta recuperación
+explícita. active, acknowledged y resolvedAt permiten distinguir causa activa,
+reconocimiento y resolución. Una secuencia cancelada no se reanuda tras RESET.
+Un error de comunicación no prueba que una placa se haya detenido. Contratos,
+unidades y procedimientos están en [DESARROLLO](DESARROLLO.md).

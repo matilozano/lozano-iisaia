@@ -255,6 +255,22 @@ class HttpTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(execute["success"])
         self.assertEqual(execute["states"][0]["state"], "on")
 
+    async def test_http_telemetry_fault_and_obsolete_command(self):
+        token = self.dispatcher.token
+        await self.exchange(request("EXECUTE", "main-motor", {"action": "start"}, token))
+        fault = request("SIMULATION_CONTROL", None)
+        fault["simulation"] = dict(action="SET_FAULT", code="OVER_TEMPERATURE", active=True)
+        result = await self.exchange(fault)
+        self.assertTrue(result["success"], result)
+        self.assertTrue(result["telemetry"]["protectionLatched"])
+        delayed = await self.exchange(request("EXECUTE", "main-motor", {"action": "start"}, token))
+        self.assertEqual(delayed["error"]["code"], "TIMEOUT")
+        telemetry = await self.exchange(request("GET_TELEMETRY", None))
+        self.assertEqual(telemetry["telemetry"]["temperature"], 85)
+        stopped = await self.exchange(request("STOP_ALL", None))
+        self.assertTrue(stopped["success"])
+        self.assertEqual(self.dispatcher.by_id["main-motor"].state["speed"], 0)
+
     async def test_delayed_body_cannot_cross_stop(self):
         token = self.dispatcher.token
         reader, writer = await asyncio.open_connection("127.0.0.1", self.port)

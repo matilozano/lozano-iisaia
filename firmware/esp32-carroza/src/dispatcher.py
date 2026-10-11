@@ -1,6 +1,7 @@
 import os
 import binascii
 from components import create_components
+from telemetry import Telemetry
 from protocol import parse, envelope, response, ProtocolError, ZERO_UUID, uuid
 
 
@@ -21,8 +22,10 @@ class Dispatcher:
         self.last_valid = clock.now()
         self.expired = False
         self.faulted = False
+        self.telemetry = Telemetry(hardware, clock)
 
     def stop(self):
+        self.telemetry.stop_confirmed = False
         self.token = self.token_factory()  # Invalidate even when an output fails.
         failure = None
         for component in self.components:
@@ -32,10 +35,12 @@ class Dispatcher:
                 component.state["online"] = False
                 failure = error
         self.faulted = failure is not None
+        self.telemetry.stop_confirmed = failure is None
         if failure:
             raise ProtocolError("INTERNAL_ERROR", "Parada no confirmada por todos los componentes")
 
     def tick(self):
+        self.protect()
         if not self.expired and self.clock.elapsed(self.clock.now(), self.last_valid) >= self.watchdog_ms:
             self.expired = True
             self.stop()
@@ -47,6 +52,11 @@ class Dispatcher:
                 self.stop()
                 self.faulted = True
                 raise
+
+    def protect(self):
+        if self.telemetry.critical() and not self.telemetry.latched:
+            self.telemetry.latched = True
+            self.stop()
 
     def handle(self, body):
         request_id = ZERO_UUID
@@ -60,6 +70,13 @@ class Dispatcher:
             if operation == "STOP_ALL":
                 self.stop()
                 states = [c.snapshot() for c in self.components]
+            elif operation in ("GET_TELEMETRY", "SIMULATION_CONTROL"):
+                if operation == "SIMULATION_CONTROL":
+                    self.telemetry.control(request.get("simulation"))
+                    if request["simulation"]["action"] == "RESET":
+                        self.token = self.token_factory()
+                    self.protect()
+                states = []
             else:
                 component = self.by_id.get(request["componentId"])
                 if component is None:
@@ -69,11 +86,14 @@ class Dispatcher:
                         raise ProtocolError("TIMEOUT", "Comando obsoleto: consultar estado antes de una nueva intencion")
                     if self.faulted:
                         raise ProtocolError("INTERNAL_ERROR", "Parada no confirmada; requiere STOP_ALL")
+                    if self.telemetry.latched:
+                        raise ProtocolError("INVALID_PARAMETER", "Proteccion enclavada; resolver, reconocer y restablecer")
                     if not isinstance(request["command"], dict):
                         raise ProtocolError("INVALID_PARAMETER", "command requerido")
                     self.clock.utc()  # Do not actuate before a usable timestamp exists.
                     try:
                         component.execute(request["command"])
+                        self.telemetry.stop_confirmed = False
                     except ProtocolError as error:
                         if error.code in ("DEVICE_OFFLINE", "INTERNAL_ERROR"):
                             self.stop()
@@ -85,7 +105,10 @@ class Dispatcher:
             timestamp = self.clock.utc()
             self.last_valid = self.clock.now()
             self.expired = False
-            return response(request_id, states=states, timestamp=timestamp, token=self.token)
+            result = response(request_id, states=states, timestamp=timestamp, token=self.token)
+            if operation in ("GET_TELEMETRY", "SIMULATION_CONTROL"):
+                result["telemetry"] = self.telemetry.snapshot()
+            return result
         except ProtocolError as error:
             return response(request_id, error=error, token=self.token)
         except Exception:

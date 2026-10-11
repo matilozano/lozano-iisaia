@@ -740,3 +740,239 @@ Esta iteración NO incluye:
 
 La integración completa con actuadores y electrónica real queda para una
 iteración posterior.
+
+## Iteración 9 — Dashboard operativo, telemetría y protecciones simuladas
+
+### Objetivo
+
+Evolucionar el sistema de control de la carroza FNE mediante un dashboard operativo que permita visualizar, controlar y supervisar los componentes desde una interfaz centralizada, incorporando telemetría simulada, detección de fallas y protecciones automáticas.
+
+La implementación debe funcionar íntegramente sin hardware físico, utilizando los gateways y la arquitectura establecidos en las iteraciones anteriores.
+
+### 1. Rediseño del dashboard
+
+Reorganizar el frontend para mejorar la visibilidad y accesibilidad de las funciones existentes.
+
+**Distribución propuesta:**
+
+- Encabezado compacto con nombre del sistema, modo de gateway, conectividad y estado general.
+- Indicadores superiores de tensión, corriente, temperatura y velocidad.
+- Digital Twin como elemento visual principal.
+- Panel de controles agrupados por componente: luces, motor, banco LED, hidráulico y servo.
+- Panel de secuencias con estado, progreso, cancelación e historial.
+- Panel de alertas, fallas y protecciones.
+- Control STOP ALL permanentemente accesible.
+
+**Requisitos:**
+
+- Priorizar la visualización del Digital Twin.
+- Evitar desplazamiento horizontal.
+- Minimizar el desplazamiento vertical en pantallas de escritorio.
+- Adaptar la distribución a escritorio, tablet y dispositivos móviles.
+- Conservar todas las acciones y funcionalidades existentes.
+- No duplicar controles que puedan provocar comandos contradictorios.
+- Mostrar estados de carga, desconexión, error y operación en curso.
+- Utilizar indicadores visuales comprensibles, sin depender exclusivamente del color.
+- Respetar `prefers-reduced-motion`.
+- Mantener STOP ALL accesible mediante una ubicación persistente que no tape otros controles.
+- No generar datos operativos ficticios desde el frontend.
+
+### 2. Telemetría simulada
+
+Incorporar un modelo de telemetría que represente las condiciones operativas de la carroza.
+
+**Variables mínimas:**
+
+- Tensión de alimentación, expresada en voltios.
+- Corriente consumida, expresada en amperios.
+- Temperatura simulada del controlador o motor, expresada en °C.
+- Velocidad estimada del motor, expresada en porcentaje.
+- Estado de conectividad y antigüedad de la última lectura.
+
+La telemetría debe producirse desde la capa de simulación correspondiente, mediante una evolución determinista o controlable para las pruebas.
+
+No debe calcularse arbitrariamente en React.
+
+Se deben definir DTOs, unidades, límites, timestamps y reglas de actualización, manteniendo compatibilidad con los contratos públicos existentes.
+
+El gateway Simulator y el firmware con HAL simulada deben ofrecer un comportamiento coherente para las variables comunes.
+
+### 3. Fallas simuladas
+
+Implementar mecanismos reproducibles para simular:
+
+- Sobretemperatura.
+- Sobrecorriente.
+- Tensión fuera del rango operativo.
+- Pérdida de comunicación.
+- Lecturas de sensores inválidas o desactualizadas.
+
+Las fallas deben poder activarse y restablecerse de manera controlada, sin depender de hardware físico.
+
+La inyección de fallas debe quedar limitada al entorno de simulación y no introducir capacidades peligrosas o ambiguas en una futura integración física.
+
+### 4. Protecciones automáticas
+
+Definir reglas explícitas para detectar condiciones críticas y llevar los componentes afectados a estados seguros.
+
+Requisitos:
+
+- Registrar la causa y el momento de activación.
+- Aplicar una política de parada coherente con STOP ALL.
+- Impedir la reactivación de componentes mientras permanezca una falla crítica activa.
+- Mantener las barreras contra comandos obsoletos incorporadas en Iteración 8.
+- No reanudar automáticamente secuencias ni movimientos después de una falla.
+- Diferenciar fallas activas, reconocidas y resueltas.
+- Definir condiciones verificables para el restablecimiento.
+- No presentar como segura una operación cuya confirmación no se haya recibido.
+
+Las protecciones deben implementarse en las capas responsables del control, nunca exclusivamente en la interfaz.
+
+### 5. Integración con Digital Twin
+
+Extender la visualización existente para mostrar:
+
+- Estado real confirmado de cada componente.
+- Indicadores de telemetría.
+- Alertas operativas.
+- Protecciones activas.
+- Estado de la secuencia SHOW_FNE.
+- Pérdida de comunicación y datos desactualizados.
+
+Las animaciones deben continuar derivándose de estados confirmados por backend.
+
+No deben introducirse movimientos visuales que representen acciones no confirmadas.
+
+### 6. Arquitectura y compatibilidad
+
+Respetar el flujo:
+
+Frontend → API REST → Application → IComponentGateway → Simulator / ESP32 → HAL.
+
+Condiciones:
+
+- Mantener Controllers delgados.
+- Preservar responsabilidades de Application, Infrastructure y firmware.
+- Mantener Program.cs como Composition Root.
+- No duplicar reglas de protección entre frontend y backend.
+- Extender contratos mediante mecanismos compatibles y documentados.
+- Mantener SHOW_FNE coordinado desde backend.
+- Conservar STOP ALL como operación prioritaria.
+- No introducir dependencias físicas obligatorias.
+- No incorporar bases de datos, MQTT, SignalR ni servicios externos sin justificación y aprobación.
+- No modificar funcionalidades de iteraciones anteriores fuera de lo estrictamente necesario para la integración.
+
+### 7. Pruebas y verificaciones
+
+Incorporar pruebas automatizadas que cubran:
+
+**Backend y simulación**
+
+- Lecturas de telemetría con unidades y rangos válidos.
+- Evolución reproducible de las variables.
+- Activación y restablecimiento de fallas.
+- Protección ante condiciones críticas.
+- Rechazo de comandos durante fallas activas.
+- STOP ALL y cancelación de SHOW_FNE.
+- Ausencia de reactivación posterior a una parada.
+- Lecturas desactualizadas y pérdida de comunicación.
+- Compatibilidad con ambos gateways.
+
+**Firmware**
+
+- Telemetría con HAL simulada.
+- Propagación de fallas.
+- Barreras de seguridad y comandos obsoletos.
+- Compatibilidad con el protocolo versionado.
+
+**Frontend**
+
+- Visualización correcta de estados y telemetría.
+- Estados de carga, error y desconexión.
+- STOP ALL accesible.
+- Coherencia entre panel y Digital Twin.
+- Ausencia de valores inventados durante errores de comunicación.
+- Adaptación responsive y ausencia de desbordamiento horizontal.
+- Accesibilidad básica y reducción de movimiento.
+
+Ejecutar nuevamente las suites y pruebas de regresión existentes.
+
+Distinguir las verificaciones automatizadas de las inspecciones visuales manuales.
+
+### 8. Documentación obligatoria
+
+Crear:
+
+`docs/ITERACION-9.md`
+
+Registrar:
+
+- Alcance implementado.
+- Archivos creados y modificados.
+- Decisiones arquitectónicas.
+- Contratos de telemetría.
+- Modelo de fallas y protecciones.
+- Resultados reales de builds y pruebas.
+- Evidencia de integración con ambos gateways.
+- Revisión visual y limitaciones.
+- Pendientes y trabajo fuera de alcance.
+
+Actualizar cuando corresponda:
+
+- `docs/ARCHITECTURE.md`
+- `docs/COMPONENTS.md`
+- `docs/ESP32-PROTOCOL.md`
+- `docs/DESARROLLO.md`
+- `README.md`
+
+No alterar los informes históricos de iteraciones anteriores.
+
+### 9. Fuera de alcance
+
+- Conexión con ESP32 físico.
+- Sensores eléctricos reales.
+- Electrónica de potencia.
+- Calibración de motores o actuadores reales.
+- Autenticación o administración de usuarios.
+- Persistencia histórica en base de datos.
+- Integraciones con servicios externos.
+- Desarrollo de una aplicación móvil independiente.
+- Implementación de un servidor MCP.
+
+### 10. Criterios de aceptación
+
+La Iteración 9 se considerará funcionalmente completada cuando:
+
+1. El dashboard permita visualizar y operar todos los componentes existentes.
+2. El Digital Twin tenga una ubicación destacada y refleje los estados confirmados.
+3. La telemetría sea suministrada por backend/simulación y no inventada por el frontend.
+4. Las fallas puedan reproducirse y verificarse mediante pruebas.
+5. Las protecciones impidan movimientos o reactivaciones indebidas.
+6. STOP ALL permanezca accesible y conserve su comportamiento prioritario.
+7. SHOW_FNE funcione correctamente en condiciones normales y se cancele ante condiciones críticas.
+8. Los modos Simulator y ESP32 con HAL simulada mantengan compatibilidad.
+9. Las pruebas automatizadas y de regresión resulten satisfactorias.
+10. Se documente el resultado de la revisión visual en escritorio y móvil.
+11. No se introduzcan regresiones en las funcionalidades de iteraciones anteriores.
+12. Se genere `docs/ITERACION-9.md` con resultados verificables.
+
+Toda verificación no ejecutada debe registrarse como PENDIENTE, sin declararse aprobada.
+
+### 11. Restricciones del Harness
+
+- Inspeccionar el estado del repositorio antes de modificar archivos.
+- Respetar AGENTS.md y las instrucciones específicas de backend/frontend.
+- Trabajar exclusivamente sobre la rama `tpfinal`.
+- No descartar cambios existentes.
+- Mantener compatibilidad con el código y los contratos anteriores.
+- No avanzar a Iteración 10.
+- No realizar commit ni push.
+- Aplicar la Definition of Done y documentar resultados reales.
+- Ante interrupciones de cuota, preservar el trabajo y seguir el protocolo de continuidad.
+
+Estado verificado de Iteración 9 (2026-10-11): dashboard, telemetría y protecciones
+implementados; builds, suites y regresión HTTP aprobados en Simulator y ESP32 con
+HAL simulada. Revisión visual posterior aprobada en escritorio/móvil, SHOW_FNE,
+STOP ALL y fallas controladas. Pendientes visuales: activación de movimiento
+reducido y caída real del transporte; no se declara cierre visual completo.
+Resultados y limitaciones en [ITERACION-9](ITERACION-9.md).

@@ -2,11 +2,40 @@ using Carroza.Api.Application;
 using Carroza.Api.Domain.Commands;
 using Carroza.Api.Domain.Components;
 using Carroza.Api.Infrastructure.Esp32;
+using Carroza.Api.Domain.Telemetry;
 
 namespace Carroza.Api.Infrastructure.Gateways;
 
 public sealed class Esp32ComponentGateway(ComponentCatalog catalog, IEsp32Transport transport) : IComponentGateway
 {
+    public Task<TelemetrySnapshot> GetTelemetryAsync(CancellationToken ct) => TelemetryAsync(null, ct);
+    public Task<TelemetrySnapshot> ControlSimulationAsync(SimulationControl control, CancellationToken ct) => TelemetryAsync(control, ct);
+
+    private async Task<TelemetrySnapshot> TelemetryAsync(SimulationControl? control, CancellationToken ct)
+    {
+        var request = new Esp32Request(1, Guid.NewGuid(), control is null ? "GET_TELEMETRY" : "SIMULATION_CONTROL", null, null,
+            Simulation: control is null ? null : new(control.Action, control.Code, control.Active));
+        var response = await transport.ExchangeAsync(request, ct);
+        if (response.Version != 1 || response.RequestId != request.RequestId) throw Invalid("telemetry");
+        if (!response.Success)
+        {
+            // An explicit unsupported-operation error from a legacy controller is not a fabricated measurement.
+            if (control is null && response.Error?.Code == "INVALID_COMMAND") return TelemetrySnapshot.Unavailable("ESP32");
+            if (response.Error is not { } error || error.Code is not ("INVALID_COMMAND" or "INVALID_PARAMETER" or "DEVICE_OFFLINE" or "TIMEOUT" or "INTERNAL_ERROR")) throw Invalid("telemetry");
+            throw new ComponentOperationException(error.Code, error.Message);
+        }
+        var t = response.Telemetry;
+        if (response.Error is not null || response.ExecutedAt is null || response.States?.Length != 0 || t is null ||
+            t.Source is not ("SIMULATED" or "UNAVAILABLE") || t.Quality is not ("VALID" or "STALE" or "INVALID" or "OFFLINE" or "UNAVAILABLE") ||
+            !double.IsFinite(t.AgeMs) || t.AgeMs < 0 || t.Alerts is null ||
+            t.Alerts.Any(a => a is null || string.IsNullOrEmpty(a.Code) || a.ActivatedAt == default) ||
+            new[] { t.Voltage, t.Current, t.Temperature, t.MotorSpeed }.Any(n => n.HasValue && !double.IsFinite(n.Value)) ||
+            t.MotorSpeed is < 0 or > 100 || (t.Quality == "VALID" && (t.SampledAt is null || t.Voltage is null || t.Current is null || t.Temperature is null || t.MotorSpeed is null)) ||
+            (t.Source == "UNAVAILABLE" && t.CanInjectFaults)) throw Invalid("telemetry");
+        return new("ESP32", t.Source, t.Online, t.SampledAt, t.AgeMs, t.Quality, t.Voltage, t.Current,
+            t.Temperature, t.MotorSpeed, t.ProtectionLatched, t.StopConfirmed, t.CanInjectFaults,
+            t.Alerts.Select(a => new OperationalAlert(a.Code, a.Active, a.Acknowledged, a.ActivatedAt, a.ResolvedAt)).ToArray());
+    }
     public async Task<ComponentState> GetStateAsync(string id, CancellationToken cancellationToken) =>
         (await ExchangeAsync("GET_STATE", id, null, cancellationToken)).States[0];
 

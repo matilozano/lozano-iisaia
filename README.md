@@ -1088,3 +1088,12 @@ Luces / Motor
 El cambio entre ambos modos deberá realizarse mediante configuración y no mediante modificaciones en la lógica de negocio.
 
 El objetivo del trabajo no será solamente controlar una luz o un motor, sino demostrar una arquitectura desacoplada en la que software, simulación y hardware puedan desarrollarse y verificarse independientemente mediante contratos explícitos y un harness de pruebas reproducible.
+
+## Dashboard operativo — Iteración 9
+
+El panel incorpora telemetría producida por Simulator o firmware con HAL simulada,
+alertas reproducibles y protecciones con parada y restablecimiento explícito.
+El Digital Twin conserva los estados confirmados; STOP ALL permanece accesible.
+Gateway y conectividad se consultan a la API, sin simular respuestas en React.
+Uso y contratos: [DESARROLLO](docs/DESARROLLO.md). Alcance y resultados reales:
+[ITERACION-9](docs/ITERACION-9.md). No equivale a validación de sensores o seguridad física.

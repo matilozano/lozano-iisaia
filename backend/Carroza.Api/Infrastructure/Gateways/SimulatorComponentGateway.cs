@@ -7,6 +7,23 @@ namespace Carroza.Api.Infrastructure.Gateways;
 public sealed class SimulatorComponentGateway(ComponentCatalog catalog, TimeProvider clock, SimulatorFaultPlan? faultPlan = null) : IComponentGateway
 {
     private readonly object gate = new();
+    private readonly SimulatedTelemetry telemetry = new(clock);
+
+    public Task<Carroza.Api.Domain.Telemetry.TelemetrySnapshot> GetTelemetryAsync(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        lock (gate) return Task.FromResult(telemetry.Read(states.Values.Max(s => s.Speed)));
+    }
+    public Task<Carroza.Api.Domain.Telemetry.TelemetrySnapshot> ControlSimulationAsync(Carroza.Api.Domain.Telemetry.SimulationControl control, CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        lock (gate)
+        {
+            telemetry.Control(control);
+            if (telemetry.Latched) StopAllAndGetStatesAsync(CancellationToken.None).GetAwaiter().GetResult();
+            return Task.FromResult(telemetry.Read(states.Values.Max(s => s.Speed)));
+        }
+    }
     private readonly SimulatorFaultPlan faults = faultPlan ?? new();
     private readonly Dictionary<string, SimulatedHydraulic> hydraulics = catalog.Components
         .Where(component => component.Type == "HYDRAULIC_ACTUATOR")
@@ -28,7 +45,9 @@ public sealed class SimulatorComponentGateway(ComponentCatalog catalog, TimeProv
         cancellationToken.ThrowIfCancellationRequested();
         lock (gate)
         {
+            if (telemetry.Latched) throw new ComponentOperationException("OPERATION_CONFLICT", "Protección activa; resolver, reconocer y restablecer antes de operar.");
             faults.BeforeCommand(id);
+            telemetry.StopConfirmed = false;
             if (hydraulics.TryGetValue(id, out var hydraulic))
                 return Task.FromResult(new ComponentResult(id, true, hydraulic.Execute(id, command.Action!), clock.GetUtcNow()));
             if (banks.TryGetValue(id, out var bank))
@@ -59,6 +78,7 @@ public sealed class SimulatorComponentGateway(ComponentCatalog catalog, TimeProv
             foreach (var bank in banks.Values) bank.StopAll();
             foreach (var component in catalog.Components)
                 states[component.Id] = states[component.Id] with { State = RestingState(component.Type), Speed = 0 };
+            telemetry.StopConfirmed = true;
             return Task.FromResult<IReadOnlyList<ComponentState>>(catalog.Components.Select(component => ReadState(component.Id)).ToArray());
         }
     }

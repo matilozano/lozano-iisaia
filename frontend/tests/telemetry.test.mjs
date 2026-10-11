@@ -1,0 +1,11 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import React from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+const module = await import('../.test-build/Telemetry.js').catch(() => ({}));
+const sample = {gateway:'SIMULATOR',source:'SIMULATED',online:true,sampledAt:'2026-10-10T12:00:00Z',ageMs:0,quality:'VALID',voltage:24,current:2,temperature:30,motorSpeed:40,protectionLatched:false,stopConfirmed:false,canInjectFaults:true,alerts:[]};
+const render = (telemetry, error='') => renderToStaticMarkup(React.createElement(module.TelemetryPanel,{telemetry,error,pending:false,act:()=>{}}));
+test('telemetry exposes missing data without fabricated zero and labels source',()=>{assert.equal(typeof module.TelemetryPanel,'function'); const html=render(null); assert.match(html,/Sin lectura/); assert.doesNotMatch(html,/0\.0 V/); assert.match(render(sample),/SIMULADA/); assert.match(render({...sample,gateway:'ESP32',source:'UNAVAILABLE',voltage:null}),/NO DISPONIBLE/);});
+test('stale and failed telemetry preserves readings but visibly marks them',()=>{assert.equal(typeof module.TelemetryPanel,'function'); assert.match(render({...sample,quality:'STALE'}),/DESACTUALIZADA/); const html=render(sample,'Consulta fallida'); assert.match(html,/24\.0/); assert.match(html,/Consulta fallida/); assert.match(html,/última lectura/i);});
+test('protection reports unconfirmed stop and exposes reset only after resolution acknowledgement',()=>{assert.equal(typeof module.TelemetryPanel,'function'); let html=render({...sample,protectionLatched:true,alerts:[{code:'OVER_CURRENT',active:true,acknowledged:false,activatedAt:sample.sampledAt,resolvedAt:null}]}); assert.match(html,/Parada sin confirmar/); assert.match(html,/disabled=""[^>]*>Restablecer/); html=render({...sample,protectionLatched:true,stopConfirmed:true,alerts:[{code:'OVER_CURRENT',active:false,acknowledged:true,activatedAt:sample.sampledAt,resolvedAt:sample.sampledAt}]}); assert.match(html,/Parada confirmada/); assert.doesNotMatch(html,/disabled=""[^>]*>Restablecer/);});
+test('hardware telemetry does not offer simulator fault injection',()=>{assert.equal(typeof module.TelemetryPanel,'function'); assert.doesNotMatch(render({...sample,gateway:'ESP32',canInjectFaults:false}),/Inyectar/);});

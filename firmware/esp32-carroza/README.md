@@ -76,3 +76,32 @@ HTTP sin TLS/autenticación requiere un entorno de prueba controlado. La posici�
 hidráulica real usa ADC; motor y servo confirman consignas aplicadas, no feedback
 mecánico. Placa, alimentación, red real, calibración y seguridad eléctrica siguen
 sin validación física.
+# Telemetría y protecciones — Iteración 9
+
+El protocolo v1 agrega `GET_TELEMETRY` y `SIMULATION_CONTROL`, ambos con
+`componentId: null` y `command: null`. Devuelven el sobre habitual, `states: []`
+y `telemetry`. No cambia GET_STATE, EXECUTE ni STOP_ALL.
+
+Solo `SimulatedHardware` permite `simulation: {action: "SET_FAULT", code:
+"OVER_TEMPERATURE", active: true}`. Códigos: OVER_TEMPERATURE, OVER_CURRENT,
+VOLTAGE_RANGE, COMMUNICATION_LOSS, INVALID_SENSOR y STALE_SENSOR. Desactivar usa
+`active: false`; ACKNOWLEDGE admite código individual u omisión para reconocer
+todas las alertas. RESET requiere todas resueltas y reconocidas, además de parada
+confirmada si se activó protección. Conserva historial de hasta seis causas.
+
+Cada falla enclava la protección y aplica parada global inmediatamente dentro del
+dispatcher, sin esperar consultas. Rechaza EXECUTE mientras está enclavada; STOP_ALL
+continúa disponible. Protección, STOP_ALL y RESET invalidan tokens previos.
+Reconocer o resolver no libera el enclavamiento; RESET no reanuda movimientos.
+Una salida que falla impide `stopConfirmed`; las demás igualmente se detienen.
+
+Con velocidad confirmada `s` en 0..100, las medidas simuladas son `24−s×0.01 V`,
+`1+s×0.08 A`, `25+s×0.3 °C`. Las fallas fuerzan 16 V, 15 A o 85 °C, fuera
+de los límites operativos 20..28 V, 12 A y 70 °C. OFFLINE e INVALID entregan
+mediciones null. STALE impone antigüedad inicial 5000 ms que crece con reloj
+monotónico (umbral 2000 ms); conserva el timestamp previo, o null si aún no hubo
+lectura. Es una antigüedad inyectada, no un fallo real de transporte.
+
+HAL física devuelve source/quality UNAVAILABLE, mediciones y timestamp null y
+`canInjectFaults: false`; no se simulan sensores reales ni se habilita inyección.
+Las garantías verificadas corresponden a HAL simulada, no a seguridad física.

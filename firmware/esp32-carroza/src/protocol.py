@@ -36,11 +36,11 @@ def envelope(request):
     if not uuid(request["requestId"]):
         raise ProtocolError("INVALID_PARAMETER", "requestId debe ser UUID no nulo")
     operation = request["operation"]
-    if operation not in ("GET_STATE", "EXECUTE", "STOP_ALL"):
+    if operation not in ("GET_STATE", "EXECUTE", "STOP_ALL", "GET_TELEMETRY", "SIMULATION_CONTROL"):
         raise ProtocolError("INVALID_COMMAND", "Operacion desconocida")
-    if operation == "STOP_ALL":
+    if operation in ("STOP_ALL", "GET_TELEMETRY", "SIMULATION_CONTROL"):
         if request["componentId"] is not None or request["command"] is not None:
-            raise ProtocolError("INVALID_PARAMETER", "STOP_ALL no admite componente/comando")
+            raise ProtocolError("INVALID_PARAMETER", "Operacion global no admite componente/comando")
     elif not isinstance(request["componentId"], str):
         raise ProtocolError("INVALID_PARAMETER", "componentId requerido")
     if operation == "GET_STATE" and request["command"] is not None:

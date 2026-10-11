@@ -137,3 +137,26 @@ HTTP lentas no bloquean la tarea de mantenimiento. La HAL debe mantener operacio
 acotadas. Una salida fallida provoca intento de parada de las demás y error; no se
 confirma una instantánea segura ficticia. Motor/servo reportan consignas aplicadas;
 solo el hidráulico real utiliza feedback ADC. Ver [firmware](../firmware/esp32-carroza/README.md).
+
+## Extensión de telemetría y protección — Iteración 9
+
+Se conservan version=1 y todas las operaciones anteriores. Operaciones globales
+adicionales GET_TELEMETRY y SIMULATION_CONTROL: componentId=null, command=null.
+SIMULATION_CONTROL agrega `simulation` con action/code/active, según el contrato
+de [DESARROLLO](DESARROLLO.md). Respuesta exitosa: states=[] y `telemetry`, además
+de los campos anteriores. Telemetry contiene el modelo público de supervisión
+excepto gateway, que el backend identifica como ESP32.
+
+Los nuevos campos son opcionales en el sobre .NET. Un controlador anterior que
+responde INVALID_COMMAND a GET_TELEMETRY se muestra UNAVAILABLE y conserva sus
+comandos existentes. No se confunde falta de soporte con mediciones en cero.
+El firmware de esta entrega acepta inyección únicamente con SimulatedHardware;
+la HAL física responde UNAVAILABLE, valores null y canInjectFaults=false.
+
+Una falla crítica activa aplica STOP_ALL en el dispatcher y enclava EXECUTE.
+Solo retirar las causas, reconocer alertas y RESET permite nuevas intenciones.
+RESET rota también controlToken: órdenes capturadas durante la falla no reviven
+al restablecer. STOP_ALL no elimina el enclavamiento. Una parada fallida no permite
+restablecer y devuelve error; la telemetría muestra stopConfirmed=false.
+El reconocimiento permite code opcional o todas las alertas, sin reanudar nada.
+No se agregan sensores físicos, autenticación ni cambios de transporte.

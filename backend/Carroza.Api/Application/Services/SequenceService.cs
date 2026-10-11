@@ -15,7 +15,8 @@ public interface ISequenceService
     Task<SequenceExecution> CancelAsync();
 }
 public sealed class SequenceService(SequenceCatalog catalog, ComponentCommandExecutor executor,
-    IComponentGateway gateway, OperationCoordinator operations, TimeProvider clock, ISequenceDelay? delay = null) : ISequenceService
+    IComponentGateway gateway, OperationCoordinator operations, TimeProvider clock, ISequenceDelay? delay = null,
+    ITelemetryService? telemetry = null) : ISequenceService
 {
     private readonly object sync = new();
     private SequenceExecution current = new(null, null, "IDLE", 0, 0, null, null, null, null, 0);
@@ -38,6 +39,8 @@ public sealed class SequenceService(SequenceCatalog catalog, ComponentCommandExe
     {
         var definition = Find(id);
         if (definition is null) return null;
+        // Admission must not race the first background supervision cycle.
+        if (telemetry is not null) await telemetry.ReadAsync(ct);
         return await operations.ManualAsync(() =>
         {
             var lease = operations.Begin();
@@ -80,9 +83,12 @@ public sealed class SequenceService(SequenceCatalog catalog, ComponentCommandExe
                         var code = error is ComponentOperationException componentError ? componentError.Code
                             : error is ArgumentException ? "INVALID_COMMAND" : "INTERNAL_ERROR";
                         Record(runId, step, code);
+                        var protectedStop = false;
+                        try { protectedStop = (await gateway.GetTelemetryAsync(CancellationToken.None)).ProtectionLatched; }
+                        catch (ComponentOperationException) { /* Preserve the original command failure. */ }
                         // Keep ownership through safe cleanup; no manual command can interleave.
                         await gateway.StopAllAndGetStatesAsync(CancellationToken.None);
-                        lock (sync) if (current.RunId == runId) Finish(lease.IsCancellationRequested ? "CANCELLED" : "FAILED", $"{step.ComponentId}: {code}: {error.Message}");
+                        lock (sync) if (current.RunId == runId) Finish(lease.IsCancellationRequested || protectedStop ? "CANCELLED" : "FAILED", $"{step.ComponentId}: {code}: {error.Message}");
                         operations.End(lease);
                         throw new SequenceFailedException();
                     }
