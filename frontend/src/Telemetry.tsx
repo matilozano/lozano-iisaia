@@ -8,7 +8,7 @@ export function TelemetryPanel({telemetry:t,error,pending,act}:{telemetry:Teleme
   const resetReady = t?.protectionLatched && t.stopConfirmed && t.alerts.every(a=>!a.active && a.acknowledged);
   return <section className="telemetry" aria-label="Telemetría y protecciones">
     <div className="section-heading"><div><p className="eyebrow">SUPERVISIÓN</p><h2>Telemetría</h2></div><span className={`quality ${error || t?.quality !== 'VALID' ? 'warning' : ''}`}>{error ? 'ÚLTIMA LECTURA' : t ? qualities[t.quality] : 'Sin lectura'}</span></div>
-    <div className="metrics">{fields.map(([label,value,unit])=><div className="metric" key={label}><span>{label}</span><strong>{value == null || !Number.isFinite(value) ? '—' : value.toFixed(1)} <small>{unit}</small></strong></div>)}</div>
+    <div className="metrics">{fields.map(([label,value,unit])=><div className={`metric ${error || t?.quality !== 'VALID' ? 'uncertain' : ''}`} key={label}><span>{label}</span><strong>{value == null || !Number.isFinite(value) ? '—' : value.toFixed(1)} <small>{unit}</small></strong></div>)}</div>
     <p className="reading-meta">Fuente {t?.source === 'SIMULATED' ? 'SIMULADA' : 'NO DISPONIBLE'} · {t?.sampledAt ? `Muestra ${new Date(t.sampledAt).toLocaleTimeString()} · antigüedad ${(t.ageMs/1000).toFixed(1)} s` : 'Sin muestra confirmada'}</p>
     {error && <p className="error" role="alert">{error} Se conserva la última lectura; no confirma condiciones actuales.</p>}
     {t?.quality !== 'VALID' && t && <p className="twin-notice">Mediciones {qualities[t.quality].toLowerCase()}. No confirman condiciones actuales.</p>}

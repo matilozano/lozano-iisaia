@@ -10,8 +10,10 @@ export function MotorControls({ device, disabled, send }: { device: Device; disa
       style={{ animationDuration: `${60 / Math.max(1, device.speed)}s`, animationDirection: device.direction === 'reverse' ? 'reverse' : 'normal', animationPlayState: running && device.speed > 0 ? 'running' : 'paused' }}><span>✣</span></div><strong>{device.speed}%</strong></div>
     <p className="state">{running ? 'En marcha' : 'Detenido'} · {device.direction === 'reverse' ? 'Reversa' : device.direction === 'forward' ? 'Adelante' : 'Sin dirección'}</p>
     <div className="actions"><button disabled={disabled} onClick={() => send(device, { action: 'start', direction: 'reverse', speed })}>← Reversa</button><button className="secondary" disabled={disabled} onClick={() => send(device, { action: 'stop' })}>Detener</button><button disabled={disabled} onClick={() => send(device, { action: 'start', direction: 'forward', speed })}>Adelante →</button></div>
+    <details className="component-advanced"><summary>Velocidad solicitada: {speed}%</summary>
     <label htmlFor="motor-speed">Velocidad solicitada <strong>{speed}%</strong></label><input id="motor-speed" type="range" min="0" max="100" value={speed} disabled={disabled} onChange={event => setSpeed(Number(event.target.value))}/>
     <button className="secondary apply" disabled={disabled || !running} onClick={() => send(device, { action: 'start', direction: device.direction ?? 'forward', speed })}>Aplicar velocidad</button>
     <p className="hint">Elegí la velocidad antes de iniciar, o aplicala mientras el motor está en marcha.</p>
+    </details>
   </>;
 }

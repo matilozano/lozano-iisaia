@@ -260,3 +260,22 @@ cancelación, bloqueo, reconocimiento/reset y ausencia de reactivación. Para re
 visual: escritorio y móvil sin overflow, STOP accesible, métricas al variar motor,
 laboratorio de fallas, alertas activas/reconocidas/resueltas, recuperación y pérdida
 de comunicación conservando la última lectura. Resultados: [ITERACION-9](ITERACION-9.md).
+
+## Vista 3D y tabs — Iteración 10
+
+Vista general contiene Twin/telemetría; Componentes conserva todos los controles;
+Secuencias e historial contiene SHOW_FNE y eventos. STOP ALL queda fuera de las
+tabs. Un único useDevices alimenta todo. Sin endpoints nuevos.
+
+La escena 3D propia carga Three/Fiber de forma diferida. Arrastrar rota; botones
+o flechas cambian cámara; +/− hacen zoom y Home/Restablecer cámara vuelve al inicio.
+Ver 2D conserva el SVG existente; falta de WebGL2/error gráfico selecciona esa
+alternativa. Pausar animación solo pausa ruedas visuales, nunca componentes.
+La preferencia prefers-reduced-motion también elimina rotación continua.
+
+Al revisar, comprobar 3D/2D/3D, cámara conservada entre tabs, SHOW_FNE completo y
+STOP durante movimiento, calidad/alertas, caída de API, y las cuatro resoluciones
+de PLAN. Probar WebGL deshabilitado y movimiento reducido cuando el navegador
+permita esos escenarios; informar PENDIENTE si no se pueden activar. Pruebas con
+los mismos comandos npm/backend anteriores; tests 3D adicionales cubren mapping,
+cámara, detección WebGL y limpieza de contexto. Resultados en ITERACION-10.

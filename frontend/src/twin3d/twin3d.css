@@ -1,0 +1,9 @@
+.camera-controls { display:flex; flex-wrap:wrap; gap:5px; padding:10px 14px; }
+.camera-controls button { min-height:44px; min-width:44px; padding:7px 10px; font-size:.75rem; }
+.scene-stage { height:clamp(240px,32vh,340px); width:100%; min-width:0; touch-action:pan-y; cursor:grab; }
+.scene-stage:active { cursor:grabbing; }
+.scene-stage:focus-visible { outline:2px solid #f6d27c; outline-offset:-3px; }
+.camera-help { padding:0 14px; margin:8px 0; font-size:.7rem; color:#b0cbd2; line-height:1.5; }
+.camera-controls [aria-pressed=true] { outline:2px solid #f6d27c; outline-offset:-3px; }
+.twin-viewport[data-reduced-motion=true] .twin-wheel { animation:none; }
+@media(max-width:550px) { .scene-stage { height:260px; } .camera-controls { gap:4px; padding:8px; } .camera-controls button { padding:7px; } }

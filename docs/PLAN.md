@@ -976,3 +976,299 @@ HAL simulada. Revisión visual posterior aprobada en escritorio/móvil, SHOW_FNE
 STOP ALL y fallas controladas. Pendientes visuales: activación de movimiento
 reducido y caída real del transporte; no se declara cierre visual completo.
 Resultados y limitaciones en [ITERACION-9](ITERACION-9.md).
+
+## Iteración 10 — Mejoras visuales y experiencia de usuario
+
+### Objetivo
+
+Optimizar la interfaz del sistema de control de la carroza FNE para ofrecer una experiencia visual moderna, clara, compacta y responsive, conservando íntegramente las funcionalidades y contratos implementados hasta la Iteración 9.
+
+La iteración se concentra exclusivamente en presentación, navegación, accesibilidad y usabilidad del frontend.
+
+### 1. Navegación mediante tabs
+
+Reemplazar la navegación actual por tres pestañas funcionales:
+
+- **Vista general:** Digital Twin, telemetría, conectividad y alertas.
+- **Componentes:** luces, motor, banco LED, hidráulico y servo.
+- **Secuencias e historial:** SHOW_FNE, progreso, cancelación e historial de operaciones.
+
+Requisitos:
+
+- Cambiar entre pestañas sin recargar la página ni navegar mediante anclas.
+- Mantener claramente identificada la pestaña activa.
+- Utilizar roles ARIA, navegación por teclado y foco visible.
+- Conservar un único mecanismo de polling y evitar solicitudes duplicadas.
+- Mantener los estados operativos sincronizados al cambiar de pestaña.
+- No perder funcionalidades existentes.
+
+### 2. Reorganización del dashboard
+
+Implementar una distribución visual jerárquica:
+
+1. Encabezado con nombre, modo del gateway y estado de conexión.
+2. Navegación mediante tabs.
+3. Contenido correspondiente a la pestaña activa.
+4. Área persistente de seguridad con STOP ALL.
+
+En Vista general, priorizar el Digital Twin y las métricas principales.
+
+En Componentes, organizar controles mediante tarjetas compactas, agrupadas por función.
+
+En Secuencias e historial, separar claramente el control de SHOW_FNE, su progreso y los eventos registrados.
+
+Evitar tarjetas excesivamente altas, espacios vacíos innecesarios y duplicación de información.
+
+### 3. Digital Twin
+
+Mejorar su presentación visual sin modificar su lógica operativa:
+
+- Darle mayor protagonismo.
+- Ajustar dimensiones y proporciones.
+- Mejorar etiquetas, indicadores y contraste.
+- Mantener visibles los estados de luces, motor, banco LED, hidráulico y servo.
+- Conservar animaciones vinculadas exclusivamente a estados confirmados por backend.
+- Respetar reducción de movimiento.
+- Evitar que se recorte o desborde en pantallas pequeñas.
+
+### 4. Telemetría y alertas
+
+Mejorar la representación de:
+
+- Tensión.
+- Corriente.
+- Temperatura.
+- Velocidad.
+- Conectividad.
+- Calidad y antigüedad de lectura.
+- Protecciones y alertas activas.
+
+Utilizar tarjetas compactas y estados visuales diferenciados.
+
+No representar valores `null`, inválidos, desactualizados o sin conexión como mediciones normales.
+
+Conservar las unidades y el origen real de los datos.
+
+### 5. Controles operativos
+
+Reorganizar visualmente:
+
+- Luces.
+- Motor.
+- Banco LED.
+- Hidráulico.
+- Servo.
+
+Requisitos:
+
+- Identificar claramente acciones y estados.
+- Mostrar cuándo un control está deshabilitado o bloqueado por protección.
+- Incorporar feedback visual durante operaciones pendientes.
+- Evitar botones demasiado pequeños.
+- Mantener consistencia de colores, iconografía y tamaños.
+- No modificar las reglas de ejecución de comandos.
+
+### 6. STOP ALL
+
+Mantener STOP ALL permanentemente accesible en las tres pestañas.
+
+Requisitos:
+
+- Posición persistente sin tapar contenido.
+- Contraste visual adecuado.
+- Funcionamiento en escritorio y móvil.
+- Accesibilidad mediante teclado.
+- No depender de la pestaña activa.
+- Conservar exactamente el comportamiento existente de parada y confirmación.
+
+### 7. Diseño responsive
+
+Verificar como mínimo:
+
+- Escritorio: 1440 × 900.
+- Notebook: 1366 × 768.
+- Tablet: 768 × 1024.
+- Móvil: 390 × 844.
+
+Evitar desplazamiento horizontal.
+
+En escritorio, priorizar una distribución que permita observar la carroza y sus indicadores principales con mínimo desplazamiento vertical.
+
+En móvil, adaptar tabs, tarjetas y controles sin perder accesibilidad.
+
+### 8. Accesibilidad y experiencia de usuario
+
+- Navegación por teclado.
+- Roles y etiquetas accesibles.
+- Indicadores de foco.
+- Contraste adecuado.
+- Estados de carga, error y desconexión.
+- Respeto por `prefers-reduced-motion`.
+- Mensajes comprensibles y consistentes.
+- No depender exclusivamente del color para indicar estados.
+
+### 9. Arquitectura y restricciones
+
+- Trabajar exclusivamente sobre frontend y documentación asociada.
+- No modificar backend, firmware, DTOs ni endpoints.
+- No introducir telemetría ficticia ni simulación local en React.
+- Mantener el backend como fuente de verdad.
+- Preservar el mecanismo de polling existente.
+- Reutilizar componentes y estilos cuando corresponda.
+- Evitar dependencias adicionales salvo necesidad justificada.
+- No incorporar nuevas funcionalidades operativas.
+- Mantener compatibilidad con Simulator y ESP32 con HAL simulada.
+
+### 10. Pruebas y criterios de aceptación
+
+Verificar:
+
+1. Funcionamiento de las tres pestañas.
+2. Conservación de todas las acciones existentes.
+3. STOP ALL visible y operativo desde cualquier pestaña.
+4. Sin duplicación de polling.
+5. Digital Twin y telemetría sincronizados.
+6. Alertas y protecciones correctamente representadas.
+7. Sin overflow horizontal en las resoluciones definidas.
+8. Navegación accesible por teclado.
+9. Estados de error y desconexión correctamente visibles.
+10. Builds y tests frontend aprobados.
+11. Regresiones relevantes del sistema aprobadas.
+12. Revisión visual real en escritorio y móvil, documentando cualquier limitación.
+
+### 11. Documentación
+
+Crear `docs/ITERACION-10.md` con:
+
+- Cambios realizados.
+- Componentes reorganizados.
+- Decisiones visuales.
+- Archivos modificados.
+- Resultados de compilación y pruebas.
+- Evidencia de revisión visual.
+- Pendientes y limitaciones.
+
+Actualizar la documentación técnica únicamente cuando corresponda.
+
+### 12. Harness y Definition of Done
+
+- Seguir AGENTS.md y docs/HARNESS.md.
+- Inspeccionar el repositorio antes de editar.
+- Preservar cambios existentes.
+- Trabajar en la rama `tpfinal`.
+- No modificar iteraciones anteriores.
+- No avanzar a Iteración 11.
+- No hacer commit ni push.
+- Registrar las verificaciones como APROBADA, FALLÓ o PENDIENTE según evidencia real.
+
+Estado de Iteración 10 (2026-10-11): navegación por tres pestañas, presentación
+compacta y responsive implementadas, sin cambios de API/backend/firmware.
+Builds, suites y regresión HTTP en Simulator y ESP32/HAL simulada aprobados.
+Revisión de las tres pestañas en las cuatro resoluciones, SHOW_FNE, STOP ALL,
+protecciones y caída real de API realizada. Pendiente: activación visual de
+movimiento reducido; no se declara cierre visual completo. Evidencia y límites
+en [ITERACION-10](ITERACION-10.md). No se inició Iteración 11.
+
+### 13. Digital Twin tridimensional
+
+Evolucionar el Digital Twin existente hacia una representación 3D interactiva de la carroza, utilizando preferentemente React Three Fiber y Three.js, siempre que su incorporación sea compatible con la arquitectura y el rendimiento del proyecto.
+
+**Requisitos:**
+
+- Modelar en 3D la estructura, ruedas, luces, banco LED, motor, hidráulico y servo.
+- Permitir rotación, zoom y restablecimiento de cámara.
+- Sincronizar movimientos y efectos exclusivamente con estados confirmados por backend.
+- No generar estados operativos ni ejecutar comandos desde el motor gráfico.
+- Mantener el Digital Twin como componente de visualización, separado de la lógica de negocio.
+- Reutilizar el mecanismo de polling existente.
+- Mostrar visualmente alertas y protecciones activas.
+- Mantener compatibilidad con Simulator y ESP32 con HAL simulada.
+- Proporcionar alternativa 2D ante ausencia de WebGL o fallas de renderizado.
+- Respetar `prefers-reduced-motion`.
+- Evitar pérdida de contexto o reinicialización innecesaria al cambiar de tabs.
+- Adaptar la visualización a escritorio y móvil.
+- Evitar modelos externos pesados o dependencias innecesarias.
+
+**Verificaciones:**
+
+- Rotación, zoom y restablecimiento de cámara.
+- Coherencia entre estados backend y animaciones 3D.
+- Funcionamiento durante SHOW_FNE.
+- Comportamiento durante STOP ALL.
+- Representación de fallas y desconexión.
+- Rendimiento y ausencia de errores de consola.
+- Alternativa 2D y reducción de movimiento.
+- Pruebas automatizadas pertinentes y revisión visual real.
+
+Registrar las decisiones técnicas y resultados en `docs/ITERACION-10.md`.
+### 14. Vista compacta de componentes
+
+Reorganizar la pestaña Componentes mediante una grilla responsive de tarjetas compactas.
+
+**Requisitos:**
+
+- Mostrar cinco componentes por fila en escritorio, siempre que el ancho disponible lo permita.
+- Utilizar tres columnas en pantallas intermedias, dos en tablet vertical y una en móvil.
+- Reducir márgenes, espacios y alturas innecesarias.
+- Mantener títulos, iconos, estados y controles claramente identificables.
+- Conservar todas las funcionalidades existentes.
+- Utilizar controles compactos, accesibles y con áreas de interacción adecuadas.
+- Permitir expandir los controles avanzados cuando el espacio sea insuficiente.
+- Evitar desbordamiento horizontal, textos cortados y superposición de elementos.
+- Mostrar estados de bloqueo, error y protección.
+- No modificar la lógica operativa, los contratos ni el polling.
+- Mantener STOP ALL permanentemente visible fuera de las tarjetas.
+
+**Criterios de aceptación:**
+
+1. Cinco tarjetas por fila en escritorio de 1440 px, si el contenedor dispone del ancho necesario.
+2. Distribución responsive en notebook, tablet y móvil.
+3. Todos los componentes y acciones existentes siguen disponibles.
+4. Los controles son legibles y utilizables.
+5. No existe desplazamiento horizontal.
+6. La revisión visual confirma la distribución y la usabilidad.
+7. Los tests y el build frontend resultan satisfactorios.
+
+Documentar las verificaciones en `docs/ITERACION-10.md`.
+### 15. Reordenamiento de componentes mediante Drag & Drop
+
+Incorporar la posibilidad de reorganizar libremente las tarjetas de la pestaña Componentes mediante arrastrar y soltar.
+
+**Requisitos funcionales:**
+
+- Permitir arrastrar cualquier tarjeta de componente hacia otra posición de la grilla.
+- Reordenar automáticamente las tarjetas al soltarlas.
+- Mostrar feedback visual durante el arrastre.
+- Utilizar un área de agarre específica para evitar conflictos con los controles operativos.
+- Mantener cinco tarjetas por fila en escritorio y la distribución responsive definida.
+- Conservar el orden personalizado al cambiar de pestaña y recargar la aplicación.
+- Persistir el orden en `localStorage`, con una clave versionada.
+- Permitir restablecer el orden predeterminado.
+- Incorporar soporte de reordenamiento mediante teclado.
+- Conservar todos los controles, estados y funcionalidades de cada tarjeta.
+- Evitar que el reordenamiento genere comandos hacia el backend.
+- No duplicar el polling ni reinicializar innecesariamente los componentes.
+- Mantener STOP ALL visible y fuera de la zona arrastrable.
+
+**Consideraciones técnicas:**
+
+- Evaluar `@dnd-kit` como biblioteca de drag & drop.
+- Utilizar identificadores estables para cada componente.
+- Validar los identificadores recuperados de `localStorage`.
+- Incorporar componentes nuevos aunque no figuren en un orden previamente guardado.
+- Ignorar identificadores que ya no existan.
+- No almacenar estados operativos ni telemetría en `localStorage`.
+- No modificar contratos del backend ni firmware.
+
+**Criterios de aceptación:**
+
+1. Las tarjetas pueden cambiarse de posición mediante drag & drop.
+2. El orden se mantiene después de recargar.
+3. Restablecer orden funciona correctamente.
+4. Los controles operativos no se activan accidentalmente al arrastrar.
+5. Funciona con mouse, teclado y dispositivos táctiles compatibles.
+6. No hay desbordamiento horizontal.
+7. STOP ALL continúa disponible y operativo.
+8. Los tests frontend y la revisión visual verifican el comportamiento.
+
+Documentar implementación, pruebas y limitaciones en `docs/ITERACION-10.md`.

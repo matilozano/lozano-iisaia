@@ -237,3 +237,14 @@ App compone Twin, TelemetryPanel, DevicePanel, Sequences y CommandHistory. useDe
 usa pollSnapshot para resolver cada respuesta por separado, conservando datos ante
 fallas sin crear polling adicional. Las fallas de transporte pueden generar alerta
 local de Application, diferenciada de la inyección controlada del simulador.
+
+## Presentación 3D — Iteración 10
+
+CarrozaView reutiliza el mapping/HUD y carga TwinViewport de forma diferida.
+sceneModel adapta posiciones y velocidad angular visual; CarrozaScene contiene
+geometría propia de Three/Fiber. Cámara, selección 2D y preferencias de movimiento
+son estado de presentación, sin HTTP ni comandos. Canvas no ejecuta efectos LED
+ni SHOW_FNE: representa channels/posiciones recibidos. Render continuo solo para
+ruedas confirmadas en marcha con vista visible; fallback SVG ante falta de WebGL
+o fallo de render. useDevices y los contratos permanecen sin cambios. Evidencia
+y límites en [ITERACION-10](ITERACION-10.md).
