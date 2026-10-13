@@ -1,5 +1,29 @@
 # Arquitectura
 
+## Secuencias personalizadas — Iteración 11
+
+El catálogo incorporado SHOW_FNE se combina con ISequenceStore (Application),
+implementado por JsonSequenceStore (Infrastructure). SequenceDefinitions coordina
+CRUD y orden mediante OperationCoordinator; Controllers convierte DTOs sin acceder
+al archivo. Domain valida definiciones y reutiliza CommandValidator.
+
+SequenceService conserva el único motor de ejecución: captura la definición
+vigente dentro de la admisión coordinada, luego ejecuta el snapshot con
+ComponentCommandExecutor. ONCE conserva el comportamiento previo; CONTINUOUS
+repite con la misma lease cancelable y vuelve a consultar seguridad entre ciclos.
+STOP ALL, protección y cancelación invalidan esa lease; no hay reanudación automática.
+Solo las definiciones se guardan; estado operativo y eventos permanecen en memoria.
+SequenceLifetime espera una parada coordinada de inicio mediante TelemetryService
+para no heredar movimientos de una HAL que sobrevivió a un reinicio. Falta de
+confirmación conserva el enclavamiento de comunicación y la API de diagnóstico;
+nunca se restaura una ejecución activa desde disco.
+
+SequenceDesigner mantiene borradores y consulta/guarda definiciones bajo demanda.
+Las órdenes de inicio y cancelación pasan por useDevices; progreso, ciclos,
+componentes, telemetría e historial reutilizan su polling. Twin 3D no conoce
+persistencia, pasos ni ejecución: representa exclusivamente estados confirmados.
+Detalles de contrato y operación: DESARROLLO; decisiones/evidencia: ITERACION-11.
+
 ## Objetivo
 
 Separar la interfaz, lógica de aplicación y hardware para permitir que el

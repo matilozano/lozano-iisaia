@@ -1272,3 +1272,140 @@ Incorporar la posibilidad de reorganizar libremente las tarjetas de la pestaña 
 8. Los tests frontend y la revisión visual verifican el comportamiento.
 
 Documentar implementación, pruebas y limitaciones en `docs/ITERACION-10.md`.
+
+# Iteración 11 — Diseñador visual de secuencias personalizadas
+
+## 1. Objetivo
+
+Implementar un módulo que permita crear, editar, guardar, organizar y ejecutar secuencias personalizadas de componentes de la carroza FNE mediante una interfaz visual.
+
+El sistema deberá permitir combinar luces, banco LED, motor, hidráulico y servo, definiendo acciones, parámetros y tiempos de ejecución.
+
+La ejecución será responsabilidad exclusiva del backend, reutilizando la arquitectura, los gateways y las protecciones desarrolladas en las iteraciones anteriores.
+
+La secuencia `SHOW_FNE` existente deberá continuar funcionando sin modificaciones incompatibles.
+
+## 2. Alcance funcional
+
+### 2.1. Administración de secuencias
+
+Permitir al operador:
+
+- Crear una secuencia.
+- Asignar nombre y descripción.
+- Editar una secuencia existente.
+- Duplicar una secuencia.
+- Eliminar una secuencia, previa confirmación.
+- Consultar el listado de secuencias guardadas.
+- Seleccionar una secuencia para editarla o ejecutarla.
+
+Las secuencias deberán persistirse en el backend para que estén disponibles después de reiniciar la aplicación.
+
+### 2.2. Editor visual de pasos
+
+Implementar un editor que permita agregar, modificar, duplicar, eliminar y reordenar pasos mediante Drag & Drop.
+
+Cada paso deberá incluir:
+
+- Identificador único.
+- Orden de ejecución.
+- Componente de destino.
+- Acción.
+- Parámetros de la acción.
+- Duración o tiempo de espera, según corresponda.
+- Descripción opcional.
+
+Los controles del editor deberán adaptarse al componente y a la acción seleccionada.
+
+El editor deberá ofrecer una alternativa accesible mediante teclado para reordenar pasos.
+
+### 2.3. Componentes disponibles
+
+**Luces**
+
+- Encender.
+- Apagar.
+- Seleccionar luces disponibles.
+
+**Banco LED**
+
+- Encender o apagar canales.
+- Configurar patrones compatibles con el gateway existente.
+- Ejecutar barridos cuando estén soportados.
+
+**Motor**
+
+- Iniciar movimiento.
+- Seleccionar dirección.
+- Configurar velocidad dentro de límites válidos.
+- Detener motor.
+
+**Hidráulico**
+
+- Extender (`EXTEND`), retraer (`RETRACT`) y detener (`STOP`).
+
+**Servo**
+
+- Configurar posición (`SET_POSITION`) entre 0 y 180 grados.
+
+Solo se permiten acciones y parámetros de los contratos existentes. El banco
+ofrece ALL_ON/ALL_OFF, barridos, PING_PONG, BLINK, STOP_EFFECT y SET_SPEED;
+no se agregan comandos individuales de canales que el gateway no soporte.
+
+### 2.4. Ejecución y detención
+
+- Ejecución única: recorrer una vez todos los pasos, respetando orden, parámetros
+  y tiempos relativos a la confirmación anterior.
+- Ejecución continua: al finalizar cada ciclo, comprobar nuevamente las condiciones
+  de seguridad y volver al primer paso. Mostrar ciclos completados.
+- Detener secuencia cancela la ejecución activa y aplica la parada segura existente.
+- STOP ALL tiene prioridad durante un paso, una espera o entre ciclos.
+- Fallas críticas, protecciones y pérdida de comunicación interrumpen la ejecución
+  conforme a las reglas existentes. Nunca reiniciar automáticamente; un nuevo
+  inicio requiere una orden explícita del operador.
+- Impedir secuencias simultáneas y comandos incompatibles mediante el coordinador,
+  cancelación y tokens existentes. Sin tareas huérfanas, esperas activas ni comandos tardíos.
+- Preservar SHOW_FNE, STOP ALL, telemetría, protecciones, Simulator y ESP32 con HAL
+  simulada. Incorporar el modo continuo sin duplicar el mecanismo de comandos.
+
+### 2.5. Persistencia y validación
+
+Persistir definiciones en backend, independientemente del navegador, mediante una
+abstracción. JSON local es aceptable con validación, escritura segura, tratamiento
+explícito de corrupción y protección frente a modificaciones concurrentes.
+
+No persistir ejecuciones para reanudarlas tras reiniciar. Conservar las garantías
+de estado seguro existentes. Validar componentes, acciones, parámetros, tiempos,
+límites y compatibilidad con el gateway activo en backend; errores HTTP claros.
+
+### 2.6. Frontend e integración
+
+Administración y editor visual Drag & Drop para secuencias y pasos, con alternativa
+accesible por teclado. Controles adaptados a cada acción, ejecución única/continua,
+progreso, paso actual y ciclos completados. Digital Twin 3D sincronizado mediante
+estados confirmados y el polling único existente; React no temporiza la ejecución.
+STOP ALL permanece fuera de la zona arrastrable y siempre accesible.
+
+## 3. Arquitectura y decisiones
+
+Reutilizar Application, OperationCoordinator, ComponentCommandExecutor,
+IComponentGateway y cancelación. Controllers solo traducen HTTP. Documentar las
+decisiones locales y su justificación en ITERACION-11 antes de implementarlas.
+Informar incompatibilidades sin cambiar silenciosamente la semántica aprobada.
+
+## 4. Pruebas y Definition of Done
+
+Cubrir CRUD, duplicación y orden, persistencia/reinicio/corrupción/concurrencia,
+validaciones, ejecución única/continua, cancelación durante pasos y entre ciclos,
+STOP ALL, fallas, pérdida de comunicación y ausencia de reactivación posterior.
+Mantener todas las regresiones previas, ambos gateways y contratos existentes.
+
+Ejecutar la matriz de DESARROLLO y el Harness: builds, suites, smoke, contrato,
+componentes, fallas, secuencias, telemetría, proxy, arquitectura y Swagger/OpenAPI.
+Intentar revisión visual real de editor, teclado/Drag & Drop, responsive, Twin,
+SHOW_FNE y parada. Registrar resultados y pendientes reales en ITERACION-11.
+No realizar commits/push ni avanzar a Iteración 12.
+
+Estado de implementación: ver [ITERACION-11](ITERACION-11.md). Motor, persistencia,
+API/editor y verificaciones automatizadas implementados; revisión visual real
+PENDIENTE por bloqueo del navegador. No se declara Definition of Done completa.

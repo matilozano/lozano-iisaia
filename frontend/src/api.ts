@@ -19,11 +19,11 @@ export interface CommandResult { deviceId: string; success: boolean; state: Omit
 
 export class ApiError extends Error { constructor(message: string, public code: string) { super(message); } }
 
-export async function request<T>(path: string, command?: unknown): Promise<T> {
+export async function request<T>(path: string, command?: unknown, method?: 'POST' | 'PUT' | 'DELETE'): Promise<T> {
   let response: Response;
   try {
     response = await fetch(`/api/${path}`, {
-      method: command === undefined ? 'GET' : 'POST',
+      method: method ?? (command === undefined ? 'GET' : 'POST'),
       headers: command === undefined ? {} : { 'Content-Type': 'application/json' },
       body: command === undefined ? undefined : JSON.stringify(command),
       signal: AbortSignal.timeout(5000)

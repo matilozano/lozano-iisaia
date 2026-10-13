@@ -1,8 +1,8 @@
 using Carroza.Api.Domain.Commands;
 namespace Carroza.Api.Domain.Sequences;
 
-public record SequenceStep(int Order, int DelayMs, string ComponentId, ComponentCommand Command);
-public record SequenceDefinition(string Id, string Name, string Description, IReadOnlyList<SequenceStep> Steps);
+public record SequenceStep(int Order, int DelayMs, string ComponentId, ComponentCommand Command, string? Id = null, string? Description = null);
+public record SequenceDefinition(string Id, string Name, string Description, IReadOnlyList<SequenceStep> Steps, string? Revision = null);
 public sealed class SequenceCatalog
 {
     public IReadOnlyList<SequenceDefinition> Sequences { get; } = Array.AsReadOnly(new[]

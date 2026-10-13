@@ -1,5 +1,5 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": { "noEmit": false, "outDir": ".test-build", "rootDir": "src" },
-  "include": ["src/carroza/model.ts", "src/carroza/sceneModel.ts", "src/twin3d/webgl.ts", "src/carroza/CarrozaSvg.tsx", "src/carroza/Visuals.tsx", "src/Telemetry.tsx", "src/pollSnapshot.ts", "src/DashboardTabs.tsx", "src/DevicePanel.tsx", "src/componentOrder.ts"]
+  "include": ["src/carroza/model.ts", "src/carroza/sceneModel.ts", "src/twin3d/webgl.ts", "src/carroza/CarrozaSvg.tsx", "src/carroza/Visuals.tsx", "src/Telemetry.tsx", "src/pollSnapshot.ts", "src/DashboardTabs.tsx", "src/DevicePanel.tsx", "src/componentOrder.ts", "src/sequences/model.ts", "src/sequences/StepEditor.tsx", "src/sequences/SequenceDesigner.tsx"]
 }

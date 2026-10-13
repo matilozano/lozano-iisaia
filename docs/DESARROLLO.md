@@ -1,5 +1,76 @@
 # Desarrollo local
 
+## Diseñador de secuencias — Iteración 11
+
+Además de las regresiones existentes, ejecutar secuencialmente contra la API del TP:
+
+```powershell
+python backend/custom-sequence-test.py
+python backend/sequence-restart-test.py
+```
+
+custom-sequence-test utiliza 5080, crea/elimina sus propias definiciones y aplica
+STOP ALL al finalizar. Comprueba CRUD/revisión/orden, ambos modos, conflictos,
+cancelación, pérdida de comunicación simulada, recuperación sin reinicio automático
+y OpenAPI. Ejecutarlo en Simulator y ESP32 con HAL simulada, sin operar el panel.
+
+sequence-restart-test administra exclusivamente sus procesos temporales en 5081
+(debe estar libre), con JSON temporal independiente y HAL temporal en 5091.
+Reinicia realmente el servidor
+durante RUNNING, comprueba definición conservada/IDLE/estado seguro inicial del
+Simulator y TIMEOUT continuo sin pasos posteriores. También verifica reinicio con
+HAL sobreviviente: el arranque aplica STOP ALL antes de operar y conserva IDLE.
+Sin confirmación del controlador conserva alerta/enclavamiento y StopConfirmed=false;
+no se habilitan nuevas ejecuciones. No demuestra seguridad física de hardware real.
+Acepta `--api-dll ruta/Carroza.Api.dll` para
+usar otra salida compilada. fault-test acepta `-ApiDirectory ruta` por la misma razón.
+
+El almacenamiento predeterminado es `ContentRootPath/App_Data/sequences.json`;
+puede configurarse con `Sequences:Path`. Guardar copias con la API detenida.
+Archivo JSON versionado, revisión optimista por definición, bloqueo entre procesos
+y reemplazo seguro en el mismo directorio. Corrupción/versiones no soportadas:
+500 STORAGE_CORRUPT, archivo intacto; restaurar manualmente una copia válida.
+Errores de acceso/escritura: 500 STORAGE_ERROR, sin confirmar cambios.
+Archivo ocupado o edición obsoleta: 409 OPERATION_CONFLICT. El orden se serializa;
+entre reordenamientos válidos sucesivos prevalece el último confirmado, sin cambiar
+el contenido de las definiciones. No compartir el archivo mediante sistemas de
+archivos remotos cuya semántica de reemplazo/bloqueo no se haya verificado.
+
+Contrato adicional, conservando rutas y respuestas previas:
+
+| Método/ruta | Semántica |
+| --- | --- |
+| POST /api/sequences | Crear, 201; definición inválida 400; id existente 409 |
+| PUT /api/sequences/{id} | Actualizar, 200; requiere revision vigente, conflicto 409 |
+| DELETE /api/sequences/{id}?revision=... | Eliminar, 204; ausente 404; revisión obsoleta 409 |
+| POST /api/sequences/{id}/duplicate | Copiar definición guardada con nuevos IDs, 200 o 404 |
+| POST /api/sequences/order | Array de todos los IDs personalizados en orden, 204; lista cambió 409 |
+| POST /api/sequences/{id}/start?mode=ONCE | Ejecución única, predeterminada y compatible |
+| POST /api/sequences/{id}/start?mode=CONTINUOUS | Repetir hasta parada/falla/protección; modo desconocido 400 |
+
+Los pasos personalizados agregan id estable y description opcional; definition
+agrega revision. order consecutivo 1..N, 1..200 pasos, delayMs 0..600000 antes del
+comando. Name 1..100 no vacío, description hasta 2000; description de paso hasta
+500. IDs de secuencia ASCII alfanuméricos/guion/guion bajo, hasta 100, sin nombres
+reservados por rutas o SHOW_FNE. Los comandos y sus rangos no cambian.
+Execution agrega mode y completedCycles. Entre ciclos hay espera cancelable de
+100 ms y nueva comprobación de telemetría, fuera del bloqueo de comandos.
+
+SHOW_FNE permanece incorporada, primera y de solo lectura; puede duplicarse.
+Todas las mutaciones de definiciones se rechazan durante RUNNING, protección o
+parada. Consultas y STOP ALL permanecen disponibles. Una ejecución usa snapshot
+capturado dentro de la admisión coordinada. No se guardan ejecuciones ni se reanudan.
+Detener secuencia aplica parada global, conserva servo y sincroniza por el polling
+existente. La finalización normal no introduce una parada implícita adicional:
+el operador debe incluir los comandos de cierre que su definición requiera.
+
+En Secuencias e historial: crear/seleccionar, agregar/duplicar/editar pasos,
+arrastrar desde el agarre o usar Espacio/flechas/Escape; Subir/Bajar también funciona
+con teclado. Guardar y ejecutar son acciones separadas: se ejecuta la última
+definición guardada. Confirmar eliminación. Revisar editor, progreso/ciclos,
+Twin y STOP ALL en escritorio/móvil y movimiento reducido. No aprobar revisión
+visual por resultados HTTP; evidencia y pendientes en [ITERACION-11](ITERACION-11.md).
+
 ## Firmware — Iteración 8
 
 Instalación, compilación MicroPython, tests y arranque del controlador HTTP local:

@@ -36,7 +36,7 @@ export function useDevices() {
       command: [event.command.action, event.command.direction, event.command.speed === null || event.command.speed === undefined ? '' : event.command.speed + '%', event.command.position === null || event.command.position === undefined ? '' : event.command.position + '°'].filter(Boolean).join(' '), result: event.result }));
     if (fresh.length) setHistory(items => [...items, ...fresh].sort((a,b) => b.timestamp - a.timestamp).slice(0,100));
   }
-  async function sequenceAction(action: 'SHOW_FNE/start' | 'cancel') {
+  async function sequenceAction(action: string) {
     if (busy.current || stopping.current) return;
     busy.current = true; const version = ++generation.current;
     setSequencePending(true); setSequenceError('');
@@ -124,5 +124,5 @@ export function useDevices() {
     } catch (e) { if (version === generation.current) setTelemetryError(e instanceof Error ? e.message : String(e)); record('PROTECCIÓN', action.action, 'ERROR'); }
     finally { busy.current = false; setTelemetryPending(false); }
   }
-  return { telemetry, telemetryError, telemetryPending, telemetryAction, execution, sequencePending, sequenceError, startSequence: () => sequenceAction('SHOW_FNE/start'), cancelSequence: () => sequenceAction('cancel'), devices, connected, error: error || connectionError, pending, confirmation, history, componentErrors, send, stopAll };
+  return { telemetry, telemetryError, telemetryPending, telemetryAction, execution, sequencePending, sequenceError, startSequence: (id = 'SHOW_FNE', mode = 'ONCE') => sequenceAction(`${encodeURIComponent(id)}/start?mode=${mode}`), cancelSequence: () => sequenceAction('cancel'), devices, connected, error: error || connectionError, pending, confirmation, history, componentErrors, send, stopAll };
 }

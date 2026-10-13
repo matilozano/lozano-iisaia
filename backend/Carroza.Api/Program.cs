@@ -25,6 +25,10 @@ builder.Services.AddHostedService<Carroza.Api.Infrastructure.Lifecycle.Telemetry
 builder.Services.AddSingleton<ComponentCommandExecutor>();
 builder.Services.AddSingleton<IComponentService, ComponentService>();
 builder.Services.AddSingleton<Carroza.Api.Domain.Sequences.SequenceCatalog>();
+builder.Services.AddSingleton<ISequenceStore>(services => new Carroza.Api.Infrastructure.Sequences.JsonSequenceStore(
+    builder.Configuration["Sequences:Path"] ?? Path.Combine(builder.Environment.ContentRootPath, "App_Data", "sequences.json"),
+    services.GetRequiredService<ComponentCatalog>()));
+builder.Services.AddSingleton<SequenceDefinitions>();
 builder.Services.AddSingleton<ISequenceService, SequenceService>();
 builder.Services.AddHostedService<Carroza.Api.Infrastructure.Lifecycle.SequenceLifetime>();
 builder.Services.AddComponentGateway(builder.Configuration);

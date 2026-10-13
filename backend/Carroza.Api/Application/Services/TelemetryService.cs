@@ -5,6 +5,7 @@ namespace Carroza.Api.Application.Services;
 
 public interface ITelemetryService
 {
+    Task InitializeAsync(CancellationToken ct);
     Task<TelemetrySnapshot> ReadAsync(CancellationToken ct);
     Task<TelemetrySnapshot> ControlAsync(SimulationControl control, CancellationToken ct);
 }
@@ -16,6 +17,18 @@ public sealed class TelemetryService(IComponentGateway gateway, OperationCoordin
     private TelemetrySnapshot? last;
     private OperationalAlert? communication;
     private bool stopped;
+
+    public async Task InitializeAsync(CancellationToken ct)
+    {
+        await gate.WaitAsync(ct);
+        try
+        {
+            // A remote controller can outlive the backend. Never inherit an active motion on restart.
+            try { await operations.StopAsync(() => gateway.StopAllAndGetStatesAsync(CancellationToken.None)); }
+            catch (ComponentOperationException) { await CommunicationFailureAsync(); }
+        }
+        finally { gate.Release(); }
+    }
 
     public async Task<TelemetrySnapshot> ReadAsync(CancellationToken ct)
     {
@@ -34,16 +47,21 @@ public sealed class TelemetryService(IComponentGateway gateway, OperationCoordin
         }
         catch (ComponentOperationException error) when (error.Code is "DEVICE_OFFLINE" or "TIMEOUT" or "INTERNAL_ERROR")
         {
-            if (communication is not { Active: true }) communication = new("COMMUNICATION_LOSS", true, false, clock.GetUtcNow(), null);
-            operations.SetProtection(true);
-            var safe = false;
-            try { await operations.StopAsync(() => gateway.StopAllAndGetStatesAsync(CancellationToken.None)); safe = true; }
-            catch (ComponentOperationException) { /* No fabricated confirmation when transport fails. */ }
-            stopped = safe;
-            var prior = last ?? TelemetrySnapshot.Unavailable("ESP32");
-            return prior with { Online = false, Quality = "OFFLINE", AgeMs = prior.SampledAt is { } time ? Math.Max(0, (clock.GetUtcNow() - time).TotalMilliseconds) : 0,
-                ProtectionLatched = true, StopConfirmed = safe, Alerts = prior.Alerts.Where(a => a.Code != "COMMUNICATION_LOSS").Append(communication).ToArray() };
+            return await CommunicationFailureAsync();
         }
+    }
+
+    private async Task<TelemetrySnapshot> CommunicationFailureAsync()
+    {
+        if (communication is not { Active: true }) communication = new("COMMUNICATION_LOSS", true, false, clock.GetUtcNow(), null);
+        operations.SetProtection(true);
+        var safe = false;
+        try { await operations.StopAsync(() => gateway.StopAllAndGetStatesAsync(CancellationToken.None)); safe = true; }
+        catch (ComponentOperationException) { /* No fabricated confirmation when transport fails. */ }
+        stopped = safe;
+        var prior = last ?? TelemetrySnapshot.Unavailable("ESP32");
+        return prior with { Online = false, Quality = "OFFLINE", AgeMs = prior.SampledAt is { } time ? Math.Max(0, (clock.GetUtcNow() - time).TotalMilliseconds) : 0,
+            ProtectionLatched = true, StopConfirmed = safe, Alerts = prior.Alerts.Where(a => a.Code != "COMMUNICATION_LOSS").Append(communication).ToArray() };
     }
 
     private async Task<TelemetrySnapshot> ApplyAsync(TelemetrySnapshot value, CancellationToken ct)

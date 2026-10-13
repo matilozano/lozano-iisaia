@@ -1,7 +1,7 @@
-param([int]$Port = 5081)
+param([int]$Port = 5081, [string]$ApiDirectory = '')
 $ErrorActionPreference = 'Stop'
 function Assert($Ok, $Message) { if (-not $Ok) { throw $Message } }
-$apiDirectory = Join-Path $PSScriptRoot 'Carroza.Api/bin/Debug/net9.0'
+$apiDirectory = if ($ApiDirectory) { (Resolve-Path $ApiDirectory).Path } else { Join-Path $PSScriptRoot 'Carroza.Api/bin/Debug/net9.0' }
 $executable = Join-Path $apiDirectory 'Carroza.Api.exe'
 $baseUrl = "http://127.0.0.1:$Port"
 $cases = @(

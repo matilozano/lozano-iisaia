@@ -5,6 +5,7 @@ import { DevicePanel } from './DevicePanel';
 import { CommandHistory } from './CommandHistory';
 import { TelemetryPanel } from './Telemetry';
 import { DashboardTabs } from './DashboardTabs';
+import { SequenceDesigner } from './sequences/SequenceDesigner';
 
 export function App() {
   const state = useDevices();
@@ -20,8 +21,8 @@ export function App() {
     <DashboardTabs panels={[
       <div className="dashboard-top" key="overview"><div className="twin-column"><CarrozaView devices={devices} connected={connected} execution={execution} />{(telemetryError || telemetry?.online === false || telemetry?.quality === 'STALE' || telemetry?.quality === 'INVALID') && <p className="twin-notice">Controlador o telemetría sin datos actuales. El Twin conserva los estados confirmados; no demuestra movimiento físico actual.</p>}</div><TelemetryPanel telemetry={telemetry} error={telemetryError} pending={telemetryPending || Boolean(pending) || sequencePending} act={action=>void telemetryAction(action)} /></div>,
       <DevicePanel key="components" devices={devices} disabled={disabled} componentErrors={componentErrors} send={send}/>,
-      <div className="operations-grid" key="operations"><Sequences execution={execution} pending={sequencePending || Boolean(pending) || connected !== true || telemetryPending} startBlocked={telemetry?.protectionLatched === true} error={sequenceError} start={() => void startSequence()} cancel={() => void cancelSequence()} /><CommandHistory history={history}/></div>
+      <div className="operations-grid" key="operations"><div><Sequences execution={execution} pending={sequencePending || Boolean(pending) || connected !== true || telemetryPending} startBlocked={telemetry?.protectionLatched === true} error={sequenceError} start={() => void startSequence()} cancel={() => void cancelSequence()} /><SequenceDesigner devices={devices} execution={execution} blocked={disabled} start={(id, mode) => void startSequence(id, mode)} cancel={() => void cancelSequence()}/></div><CommandHistory history={history}/></div>
     ]}/>
-    <footer>{telemetry?.source === 'SIMULATED' ? 'Telemetría simulada' : 'Telemetría no disponible'} · Fuente de estado: API · Historial de esta sesión · Sin persistencia</footer>
+    <footer>{telemetry?.source === 'SIMULATED' ? 'Telemetría simulada' : 'Telemetría no disponible'} · Fuente de estado: API · Historial de esta sesión · Definiciones persistidas en backend</footer>
   </main></div><div className="stop-bar"><div><strong>Parada general</strong><p>Apaga luces y efectos, detiene motor e hidráulico. Conserva el ángulo del servo.</p></div><button className="stop" disabled={pending.startsWith('Deteniendo')} onClick={() => void stopAll()}>■ STOP ALL · Detener todo</button></div></div>;
 }
