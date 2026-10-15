@@ -1,0 +1,14 @@
+**/bin/
+**/obj/
+**/node_modules/
+**/dist/
+*.tsbuildinfo
+.vs/
+.env
+frontend/.test-build/
+backend/Carroza.Api/App_Data/
+.artifacts-11/
+**/__pycache__/
+firmware/esp32-carroza/.tools/
+firmware/esp32-carroza/build/
+firmware/esp32-carroza/src/config_local.py

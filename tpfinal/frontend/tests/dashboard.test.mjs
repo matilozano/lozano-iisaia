@@ -1,0 +1,4 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+test('dashboard reserves persistent STOP region and explicit keyboard navigation',()=>{const app=readFileSync(new URL('../src/App.tsx',import.meta.url),'utf8'); assert.match(app,/<DashboardTabs/); assert.equal((app.match(/useDevices\(\)/g) ?? []).length,1); assert.match(app,/dashboard-top/); const tabs=readFileSync(new URL('../src/DashboardTabs.tsx',import.meta.url),'utf8'); assert.match(tabs,/Ir al contenido/); assert.doesNotMatch(tabs,/useDevices|fetch\(|setTimeout|setInterval/); const css=readFileSync(new URL('../src/styles.css',import.meta.url),'utf8'); assert.match(css,/grid-template-rows:\s*minmax\(0,\s*1fr\) auto/);assert.match(css,/\.dashboard-scroll[^}]*overflow-y:\s*auto/s);});

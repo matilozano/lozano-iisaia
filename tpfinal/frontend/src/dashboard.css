@@ -1,0 +1,84 @@
+/* Iteration 10: presentation only, independent of the confirmed state source. */
+[hidden] { display:none !important; }
+.dashboard-header { padding-bottom:12px; }
+.controller-status { margin:6px 0; color:#adbfcd; font-size:.75rem; }
+.feedback { margin:6px 0; min-height:18px; }
+.dashboard-tabs { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; padding:4px; margin:10px 0; border:1px solid #354856; background:#101b28; border-radius:10px; }
+.dashboard-tabs [role=tab] { color:#bdcfdd; background:transparent; border:1px solid transparent; min-height:46px; }
+.dashboard-tabs [role=tab]:hover { background:#253c49; }
+.dashboard-tabs [aria-selected=true] { color:#b3f5dd; background:#203e3e; border-color:#75bea5; box-shadow:inset 0 -3px #86dcbf; }
+[role=tabpanel] { min-width:0; }
+[role=tabpanel]:focus-visible { outline:2px solid #f6d27c; outline-offset:3px; }
+.operation-notice { margin:10px 0; padding:10px 14px; border-left:3px solid #e4b673; background:#322a20; color:#ffe0b3; font-size:.78rem; line-height:1.5; overflow-wrap:anywhere; }
+.dashboard-top { grid-template-columns:minmax(0,1.85fr) minmax(300px,1fr); gap:16px; }
+.dashboard-top .carroza-view { margin:0; }
+.dashboard-top .carroza-svg { max-height:clamp(210px,30vh,280px); }
+.twin-heading { padding:14px 18px 0; }
+.twin-hud > div { padding:10px 14px; }
+.twin-note { margin:10px 0; font-size:.7rem; }
+.twin-subcaption { fill:#a2c1cc; }
+.telemetry { padding:16px; }
+.section-heading { margin-bottom:10px; }
+.metric { padding:10px 12px; }
+.metric strong { margin-top:5px; font-size:1.5rem; }
+.metric.uncertain { border-style:dashed; border-color:#b48b55; }
+.metric.uncertain strong { color:#efc991; }
+.protection { margin-top:10px; padding:10px; }
+.alert-item { padding:9px 0; }
+.control-panel { margin-top:0; }
+.devices { gap:12px; }
+.devices article { padding:16px; }
+.lamp-stage, .rotor-stage, .mechanism { height:80px; }
+.channels { margin:16px 0; }
+.operations-grid { margin-top:0; align-items:start; }
+.operations-grid .table-scroll { max-height:440px; }
+.bank { margin-top:16px; }
+footer { margin-top:16px; }
+@media(min-width:1101px) { .dashboard-top .twin-hud { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+@media(max-width:1100px) { .dashboard-top { grid-template-columns:minmax(0,1.6fr) minmax(290px,1fr); } }
+@media(max-width:800px) { .dashboard-top { grid-template-columns:minmax(0,1fr); } .dashboard-top .carroza-svg { max-height:none; } .operations-grid { grid-template-columns:minmax(0,1fr); } }
+@media(max-width:550px) { .dashboard-tabs { gap:2px; padding:4px; } .dashboard-tabs [role=tab] { padding:9px 4px; font-size:.72rem; } .controller-status { font-size:.7rem; line-height:1.5; } .twin-heading { padding:12px; } .twin-heading h2 { font-size:.9rem; } .twin-heading > span { font-size:.67rem; } .twin-note { padding:0 12px; } }
+
+/* Compact components: shared confirmed-state cards; no operational state here. */
+.control-panel .devices { display:grid; grid-template-columns:minmax(0,1fr); gap:12px; align-items:start; }
+.control-panel .devices > article, .control-panel .devices > .bank { min-width:0; grid-column:auto; margin:0; padding:12px; border-radius:10px; }
+.control-panel h2 { font-size:1rem; line-height:1.35; margin:6px 0; overflow-wrap:anywhere; }
+.control-panel .eyebrow { font-size:.65rem; line-height:1.5; }
+.control-panel .device-online, .control-panel .failure { font-size:.75rem; margin:6px 0; }
+.control-panel .lamp-stage, .control-panel .rotor-stage, .control-panel .mechanism { height:60px; margin:8px 0; }
+.control-panel .lamp { width:46px; height:46px; border-width:4px; }
+.control-panel .rotor { width:54px; height:54px; }
+.control-panel .rotor span { font-size:44px; }
+.control-panel .rotor-stage { gap:12px; }
+.control-panel .rotor-stage > strong { font-size:1.3rem; }
+.control-panel .state { font-size:.8rem; line-height:1.5; margin:8px 0; overflow-wrap:anywhere; }
+.control-panel .actions { gap:4px; }
+.control-panel button { min-height:44px; min-width:0; padding:8px 5px; font-size:.75rem; line-height:1.4; overflow-wrap:anywhere; }
+.control-panel label { margin-top:8px; font-size:.78rem; line-height:1.5; }
+.control-panel input[type=range] { min-height:44px; margin:0; }
+.control-panel .hint { font-size:.75rem; line-height:1.5; margin:8px 0 0; }
+.control-panel .error { padding:8px; font-size:.8rem; }
+.control-panel .channels { grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; margin:12px 0; }
+.control-panel .channels > div { gap:4px; font-size:.7rem; }
+.control-panel .channels .lamp { width:26px; height:26px; border-width:3px; }
+.component-advanced { margin-top:8px; border-top:1px solid #354856; }
+.component-advanced summary { min-height:44px; padding:12px 2px; cursor:pointer; font-size:.8rem; color:#b3f5dd; }
+.control-panel .bank-actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; }
+@media(min-width:600px) { .control-panel .devices { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(min-width:1000px) { .control-panel .devices { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+@media(min-width:1400px) { .control-panel .devices { grid-template-columns:repeat(5,minmax(0,1fr)); } }
+
+.component-card { position:relative; min-width:0; }
+.control-panel .component-card > article, .control-panel .component-card > .bank { min-width:0; margin:0; padding:12px; border-radius:10px; }
+.component-card > :is(article,.bank) > :is(.eyebrow,h2) { padding-right:44px; }
+.control-panel .drag-handle { position:absolute; top:6px; right:6px; width:44px; height:44px; padding:0; font-size:1.6rem; color:#c1e8dc; background:#20333f; border:1px solid #526672; cursor:grab; touch-action:none; z-index:1; }
+.control-panel .drag-handle:active { cursor:grabbing; }
+.component-card.dragging { opacity:.35; outline:2px dashed #8bdec0; outline-offset:2px; }
+.card-drag-preview { padding:14px; background:#203e3e; border:2px solid #8bdec0; border-radius:10px; box-shadow:0 8px 24px #0008; color:#dff9ef; overflow-wrap:anywhere; pointer-events:none; }
+.component-order-tools { display:flex; align-items:center; gap:12px; margin-bottom:10px; }
+.component-order-tools p { flex:1; margin:0; color:#b9ccd5; font-size:.78rem; line-height:1.5; }
+.component-order-tools button { flex-shrink:0; }
+.order-notice { font-size:.8rem; color:#b3f5dd; overflow-wrap:anywhere; }
+.order-notice:empty { display:none; }
+@media(max-width:550px) { .component-order-tools { align-items:stretch; flex-direction:column; } }
+@media(prefers-reduced-motion:reduce) { .component-card { transition:none !important; } }

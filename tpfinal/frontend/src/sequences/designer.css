@@ -1,0 +1,9 @@
+.sequence-designer { min-width: 0; }
+.sequence-designer label { display: flex; flex-direction: column; gap: .4rem; min-width: 0; margin: .5rem 0; }
+.sequence-designer input, .sequence-designer select, .sequence-designer textarea { width: 100%; min-width: 0; box-sizing: border-box; min-height: 44px; color: inherit; background: #121e2b; border: 1px solid #53667b; border-radius: 6px; padding: .5rem; }
+.sequence-sort-row { display: flex; gap: .5rem; align-items: flex-start; margin: .7rem 0; min-width: 0; position: relative; }
+.sequence-sort-row > fieldset { min-width: 0; flex: 1; border: 1px solid #53667b; border-radius: 8px; }
+.sequence-sort-row > button:not(.sequence-handle) { min-width: 0; overflow-wrap: anywhere; text-align: left; }
+.sequence-handle { touch-action: none; cursor: grab; min-width: 44px; min-height: 44px; }
+.sequence-designer .actions { flex-wrap: wrap; }
+@media (prefers-reduced-motion: reduce) { .sequence-sort-row { transition: none !important; } }
